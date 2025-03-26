@@ -30,10 +30,10 @@ const getStartBlock = (envVarName: string) => {
 const createOptimizedTransport = (url: string) => {
   return http(url, {
     batch: {
-      batchSize: 1000,          // Process one request at a time
+      batchSize: 1,          // Process one request at a time
       wait: 100,            // Wait longer between batches
     },
-    timeout: 5000,          // 20s timeout
+    timeout: 5000,          // 5s timeout
     retryCount: 0,           // No retries - better to fail fast and let our script handle it
     
     // Handle responses to detect missing blocks

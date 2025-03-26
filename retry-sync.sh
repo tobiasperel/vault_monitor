@@ -4,7 +4,7 @@
 pkill -f "ponder" || true
 
 # Initial starting block
-START_BLOCK=19423034  # Starting just after the failing range (19422983 to 19423033)
+START_BLOCK=20000000  # Starting just after the failing range (19422983 to 19423033)
 
 # Function to update .env.local with new start block
 update_env_file() {
@@ -82,10 +82,10 @@ const getStartBlock = (envVarName: string) => {
 const createOptimizedTransport = (url: string) => {
   return http(url, {
     batch: {
-      batchSize: 1000,          // Process one request at a time
+      batchSize: 1,          // Process one request at a time
       wait: 100,            // Wait longer between batches
     },
-    timeout: 5000,          // 20s timeout
+    timeout: 5000,          // 5s timeout
     retryCount: 0,           // No retries - better to fail fast and let our script handle it
     
     // Handle responses to detect missing blocks
@@ -216,8 +216,8 @@ while true; do
       fi
       
       # If all extraction methods failed, just skip ahead 1000 blocks
-      NEW_START_BLOCK=$((START_BLOCK + 15))
-      echo "Could not extract block range, skipping ahead 1000 blocks to $NEW_START_BLOCK"
+      NEW_START_BLOCK=$((START_BLOCK + 20))
+      echo "Could not extract block range, skipping ahead 20 blocks to $NEW_START_BLOCK"
       
       # Kill ponder process
       kill $PID
