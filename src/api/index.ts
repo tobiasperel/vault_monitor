@@ -1,13 +1,17 @@
+import { Hono } from "hono";
 import { db } from "ponder:api";
 import schema from "ponder:schema";
-import { Hono } from "hono";
-import { client, graphql } from "ponder";
+import { graphql } from "ponder";
 
 const app = new Hono();
 
-app.use("/sql/*", client({ db, schema }));
-
+// Register GraphQL middleware
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
 
-export default app;
+// Example custom endpoint
+app.get("/hello", (c) => {
+  return c.text("Hello, Vault Monitor!");
+});
+
+export default app; 

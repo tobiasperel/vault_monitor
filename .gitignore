@@ -1,5 +1,18 @@
 # Dependencies
 /node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+/dist
 
 # Debug
 npm-debug.log*
@@ -7,12 +20,46 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Misc
-.DS_Store
-
-# Env files
+# Local env files
 .env*.local
+.env
+.env.development
+.env.test
+.env.production
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Ponder
 /generated/
 /.ponder/
+/ponder-db/
+*.db
+*.db-journal
+/:memory:/
+
+# Logs
+logs
+*.log
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Build artifacts
+*.tsbuildinfo
