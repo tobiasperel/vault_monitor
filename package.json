@@ -16,7 +16,9 @@
     "jobs": "tsx src/scripts/setupJobs.ts",
     "chunk-index": "tsx src/scripts/chunkIndexer.ts",
     "sync-latest": "TARGET_BLOCK=20030000 tsx src/scripts/chunkIndexer.ts",
-    "test-rpc": "tsx src/scripts/testRpc.ts"
+    "test-rpc": "tsx src/scripts/testRpc.ts",
+    "monitor": "tsx src/scripts/monitor.ts",
+    "dashboard": "node src/dashboard/index.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
@@ -26,7 +28,9 @@
     "hono": "^4.5.0",
     "ponder": "0.10.3",
     "tsx": "^4.19.3",
-    "viem": "^2.21.3"
+    "viem": "^2.21.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "@types/cron": "^2.4.3",
