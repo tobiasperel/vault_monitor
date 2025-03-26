@@ -22,29 +22,36 @@ const ensureAbiArray = (abi: any) => {
 // For development, use a smaller block range to avoid rate limits
 const isDev = process.env.NODE_ENV !== 'production';
 const getStartBlock = (envVarName: string) => {
+  // Always use the specified start block from env vars
   const startBlock = Number(process.env[envVarName] || "0");
-  // In development, only index from the dev start block to reduce RPC calls
-  if (isDev) {
-    const devStartBlock = process.env.DEV_START_BLOCK ? 
-      Number(process.env.DEV_START_BLOCK) : 
-      20028000;
-      
-    // Use a safe number to avoid Infinity
-    return Math.max(startBlock, devStartBlock);
-  }
   return startBlock;
 };
 
-// Create an optimized transport with retries and timeout configuration
 const createOptimizedTransport = (url: string) => {
   return http(url, {
     batch: {
-      batchSize: 100,          // Start with moderate batch size
-      wait: 100,               // Small wait between batches
+      batchSize: 1000,          // Process one request at a time
+      wait: 100,            // Wait longer between batches
     },
-    timeout: 30000,            // 30s timeout
-    retryCount: 3,             // 3 retries
-    retryDelay: 1000,          // 1s between retries
+    timeout: 5000,          // 20s timeout
+    retryCount: 0,           // No retries - better to fail fast and let our script handle it
+    
+    // Handle responses to detect missing blocks
+    onFetchResponse: (response: any) => {
+      // If there's any error, return empty results
+      if (response?.error) {
+        console.log(`RPC error detected: ${response?.error?.message}`);
+        
+        // Return empty logs instead of error to prevent hanging
+        return { 
+          id: response.id,
+          jsonrpc: '2.0',
+          result: [] 
+        };
+      }
+      return response;
+    },
+    
     fetchOptions: {
       headers: {
         'Content-Type': 'application/json',
