@@ -12,13 +12,13 @@ update_env_file() {
   
   cat > .env.temp << EOL
 # Mainnet RPC URL used for fetching blockchain data
-PONDER_RPC_URL_1="http://34.57.122.149:3001/evm"
+PONDER_RPC_URL_1="http://34.172.169.184:3001/evm"
 
 # Postgres database URL for Ponder - pointing to Supabase PostgreSQL
 DATABASE_URL="postgresql://postgres:HjYeGV2Lyr9J4V3T@db.nctdcgedcpptlifinpky.supabase.co:5432/postgres?sslmode=require&pool_timeout=0"
 
 # Base chain RPC
-PONDER_RPC_URL_BASE="http://34.57.122.149:3001/evm"
+PONDER_RPC_URL_BASE="http://34.172.169.184:3001/evm"
 
 # Contract addresses
 BORING_VAULT_ADDRESS="0x208EeF7B7D1AcEa7ED4964d3C5b0c194aDf17412"
@@ -57,6 +57,7 @@ import fs from "fs";
 // Import all ABIs from JSON files and ensure they're properly parsed
 const BoringVaultAbi = JSON.parse(fs.readFileSync("./abis/BoringVault.json", "utf8"));
 const TellerAbi = JSON.parse(fs.readFileSync("./abis/TellerWithMultiAssetSupport.json", "utf8"));
+const TroveManagerAbi = JSON.parse(fs.readFileSync("./abis/ITroveEvents.json", "utf8"));
 
 // Make sure all ABIs are arrays
 const ensureAbiArray = (abi: any) => {
@@ -131,6 +132,12 @@ export default createConfig({
       abi: ensureAbiArray(TellerAbi),
       address: process.env.TELLER_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('TELLER_START_BLOCK'),
+    },
+    TroveManager: {
+      network: "hyperliquid",
+      abi: ensureAbiArray(TroveManagerAbi),
+      address: process.env.TROVE_MANAGER_ADDRESS as \`0x\${string}\`,
+      startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'),
     },
   },
   database: {

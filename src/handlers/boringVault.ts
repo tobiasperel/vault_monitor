@@ -52,7 +52,6 @@ ponder.on("BoringVault:Enter", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-    console.log('BoringVault:Enter event received', event);
     
     const { from, asset, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
@@ -166,8 +165,6 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-
-    console.log('BoringVault:Transfer event received', event);
     
     const { from, to, value } = event.args;
     const timestamp = Number(event.block.timestamp);

@@ -71,7 +71,6 @@ ponder.on("Teller:Deposit", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-    console.log('Teller:Deposit event received', event);
     
     const { receiver, depositAsset, depositAmount } = event.args;
     const timestamp = Number(event.block.timestamp);
