@@ -1,7 +1,7 @@
 // Dashboard JavaScript
 
 // API endpoint base URL
-const API_BASE_URL = 'http://localhost:42069/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 // Utility functions
 function formatAddress(address) {
@@ -33,13 +33,78 @@ async function fetchData(endpoint) {
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${endpoint}:`, error);
+    
+    // Show error on dashboard
+    showErrorMessage(`Failed to load ${endpoint} data. ${error.message}`);
+    
     return null;
+  }
+}
+
+// Show error message on dashboard
+function showErrorMessage(message) {
+  const errorContainer = document.getElementById('error-container');
+  if (!errorContainer) {
+    // Create error container if it doesn't exist
+    const main = document.querySelector('main');
+    if (main) {
+      const container = document.createElement('div');
+      container.id = 'error-container';
+      container.className = 'alert alert-danger mt-3 mb-3';
+      container.style.display = 'none';
+      main.prepend(container);
+    }
+  }
+  
+  const container = document.getElementById('error-container');
+  if (container) {
+    // Create message if doesn't exist already
+    if (!container.textContent.includes(message)) {
+      const errorElement = document.createElement('div');
+      errorElement.textContent = message;
+      container.appendChild(errorElement);
+      
+      // Add reload button if not present
+      if (!container.querySelector('button')) {
+        const reloadButton = document.createElement('button');
+        reloadButton.className = 'btn btn-sm btn-danger mt-2';
+        reloadButton.textContent = 'Reload Data';
+        reloadButton.addEventListener('click', () => {
+          container.style.display = 'none';
+          container.innerHTML = '';
+          loadDashboardData();
+        });
+        container.appendChild(reloadButton);
+      }
+    }
+    
+    container.style.display = 'block';
+  }
+}
+
+// Clear error messages
+function clearErrorMessages() {
+  const errorContainer = document.getElementById('error-container');
+  if (errorContainer) {
+    errorContainer.style.display = 'none';
+    errorContainer.innerHTML = '';
   }
 }
 
 // Load dashboard data
 async function loadDashboardData() {
   try {
+    // Clear previous errors
+    clearErrorMessages();
+    
+    // Update loading state
+    document.querySelectorAll('tbody').forEach(tbody => {
+      if (tbody.children.length === 0 || 
+          (tbody.children.length === 1 && tbody.children[0].textContent.includes('No data'))) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Loading data...</td></tr>';
+      }
+    });
+    
     // Fetch vault status for summary cards
     const vaultStatus = await fetchData('vault-stats');
     if (vaultStatus) {
@@ -535,11 +600,32 @@ function createPriceChart(prices) {
   });
 }
 
-// Initialize dashboard on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize dashboard
+function initDashboard() {
   console.log('Loading dashboard data...');
   loadDashboardData();
   
   // Refresh data every 60 seconds
   setInterval(loadDashboardData, 60000);
-}); 
+}
+
+// Check if we're in a browser environment
+if (typeof document !== 'undefined') {
+  // Browser environment - add event listener
+  document.addEventListener('DOMContentLoaded', () => {
+    initDashboard();
+  });
+} else {
+  // Node.js environment - export functions
+  console.log('Dashboard script loaded in Node.js environment');
+  
+  // For CommonJS environments
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      loadDashboardData,
+      formatAddress,
+      formatTimestamp,
+      formatAmount
+    };
+  }
+} 

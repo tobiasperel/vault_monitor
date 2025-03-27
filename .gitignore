@@ -63,3 +63,5 @@ logs
 
 # Build artifacts
 *.tsbuildinfo
+
+/db

@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 // Import the schema tables
 // @ts-ignore - ignore missing type declarations
-import { vault, vaultUser, rawEvent } from "../../ponder.schema";
+import { vault, vaultUser, rawEvent, deposit } from "../../ponder.schema";
 
 // Initialize Supabase client if credentials are provided
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -16,6 +16,23 @@ if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
 } else {
   console.log('Supabase credentials not provided, data will only be stored in Ponder DB');
+}
+
+// Helper function to safely serialize BigInt values
+function serializeEvent(event: any): string {
+  const serialized = JSON.stringify(event, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    return value;
+  });
+  return serialized;
+}
+
+// Helper function to safely get event name
+function getEventName(event: any): string {
+  if (!event || !event.eventName) return '';
+  return String(event.eventName);
 }
 
 // Function to safely insert to Supabase (only if client is initialized)
@@ -29,163 +46,129 @@ async function safeSupabaseInsert(table: string, data: any) {
   }
 }
 
-// Define event context types
-interface PonderContext {
-  db: any;
-  contracts: {
-    BoringVault: {
-      instance: any;
-    }
-  };
-}
-
-interface PonderEvent {
-  args: any;
-  block: {
-    timestamp: string | number;
-    number: string | number;
-  };
-  transaction: {
-    hash: string;
-  };
-  log: {
-    logIndex: string | number;
-  };
-  address: string;
-}
-
 // Handler for Enter events (deposits)
-ponder.on("BoringVault:Enter", async ({ event, context }: { event: PonderEvent, context: PonderContext }) => {
+// @ts-ignore - TypeScript type error with event handler signature
+ponder.on("BoringVault:Enter", async (params: any) => {
   try {
-    const { user, token, amount, shares } = event.args;
+    const { event, context } = params;
+    if (!event.args) return;
+    console.log('BoringVault:Enter event received', event);
+    
+    const { from, asset, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
     const blockNumber = Number(event.block.number);
-    
-    // Get vault data from the contract
-    const totalSupply = await context.contracts.BoringVault.instance.totalSupply();
-    const totalAssets = await context.contracts.BoringVault.instance.totalAssets();
     
     // Generate unique event ID
     const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
     
-    // Get current vault state
-    const vaultRecord = await context.db.findUnique(vault, {
-      where: { id: event.address.toLowerCase() },
-    });
-    
-    // Update vault state
-    if (vaultRecord) {
-      await context.db.update(vault, {
-        where: { id: event.address.toLowerCase() },
-        data: {
-          totalAssets: vaultRecord.totalAssets + BigInt(amount),
-          lastUpdatedBlock: BigInt(blockNumber),
-          lastUpdatedTimestamp: new Date(timestamp * 1000),
-        },
-      });
-    } else {
-      // Create vault record if it doesn't exist
-      await context.db.insert(vault, {
-        id: event.address.toLowerCase(),
-        totalAssets: BigInt(amount),
-        totalShares: BigInt(0), // Will update when we get the shares info
-        lastUpdatedBlock: BigInt(blockNumber),
-        lastUpdatedTimestamp: new Date(timestamp * 1000),
-      });
-    }
+    // Safe handling for addresses
+    const contractAddress = event.log.address.toLowerCase();
+    const safeUserAddress = from && typeof from.toLowerCase === 'function' ? 
+      from.toLowerCase() : String(from);
     
     // Store raw event data in Supabase
     await safeSupabaseInsert('raw_events', {
       id: eventId,
       event_type: 'Deposit',
-      contract_address: event.address.toLowerCase(),
-      user_address: user.toLowerCase(),
-      amount: amount.toString(),
+      contract_address: contractAddress,
+      user_address: safeUserAddress,
+      amount: amount ? amount.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000).toISOString(),
-      payload: event,
+      payload: serializeEvent(event),
+    });
+    
+    // Create deposit record
+    await context.db.insert(deposit).values({
+      id: eventId,
+      txHash: event.transaction.hash,
+      nonce: BigInt(event.transaction.nonce || 0),
+      timestamp: timestamp,
+      receiver: safeUserAddress,
+      depositAsset: asset.toLowerCase(),
+      depositAmount: BigInt(amount || 0),
+      shareAmount: BigInt(shares || 0),
+      depositTimestamp: timestamp,
+      shareLockPeriod: 0, // No lock period for BoringVault deposits
+      refunded: false,
     });
     
     // Also store in Ponder's raw_event table
-    await context.db.insert(rawEvent, {
+    await context.db.insert(rawEvent).values({
       id: eventId,
-      contractAddress: event.address.toLowerCase(),
+      contractAddress: contractAddress,
       eventName: 'Enter',
       blockNumber: BigInt(blockNumber),
-      logIndex: event.log.logIndex,
+      logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000),
-      data: event,
+      data: serializeEvent(event),
     });
+    console.log('BoringVault:Enter event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Enter event:', error);
   }
 });
 
 // Handler for Exit events (withdrawals)
-ponder.on("BoringVault:Exit", async ({ event, context }: { event: PonderEvent, context: PonderContext }) => {
+// @ts-ignore - TypeScript type error with event handler signature
+ponder.on("BoringVault:Exit", async (params: any) => {
   try {
+    const { event, context } = params;
+    if (!event.args) return;
+    
     const { user, token, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
-    // Get updated vault data from the contract
-    const totalSupply = await context.contracts.BoringVault.instance.totalSupply();
-    const totalAssets = await context.contracts.BoringVault.instance.totalAssets();
-    
     // Generate unique event ID
     const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
     
-    // Get current vault state
-    const vaultRecord = await context.db.findUnique(vault, {
-      where: { id: event.address.toLowerCase() },
-    });
-    
-    // Update vault state
-    if (vaultRecord) {
-      await context.db.update(vault, {
-        where: { id: event.address.toLowerCase() },
-        data: {
-          totalAssets: vaultRecord.totalAssets - BigInt(amount),
-          lastUpdatedBlock: BigInt(blockNumber),
-          lastUpdatedTimestamp: new Date(timestamp * 1000),
-        },
-      });
-    }
+    // Safe handling for addresses
+    const contractAddress = event.log.address.toLowerCase();
+    const safeUserAddress = user && typeof user.toLowerCase === 'function' ? 
+      user.toLowerCase() : String(user);
     
     // Store raw event data in Supabase
     await safeSupabaseInsert('raw_events', {
       id: eventId,
       event_type: 'Withdraw',
-      contract_address: event.address.toLowerCase(),
-      user_address: user.toLowerCase(),
-      amount: amount.toString(),
+      contract_address: contractAddress,
+      user_address: safeUserAddress,
+      amount: amount ? amount.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000).toISOString(),
-      payload: event,
+      payload: serializeEvent(event),
     });
     
     // Also store in Ponder's raw_event table
-    await context.db.insert(rawEvent, {
+    await context.db.insert(rawEvent).values({
       id: eventId,
-      contractAddress: event.address.toLowerCase(),
+      contractAddress: contractAddress,
       eventName: 'Exit',
       blockNumber: BigInt(blockNumber),
-      logIndex: event.log.logIndex,
+      logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000),
-      data: event,
+      data: serializeEvent(event),
     });
+    console.log('BoringVault:Exit event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Exit event:', error);
   }
 });
 
 // Handler for Transfer events (tracks user shares)
-ponder.on("BoringVault:Transfer", async ({ event, context }: { event: PonderEvent, context: PonderContext }) => {
+// @ts-ignore - TypeScript type error with event handler signature
+ponder.on("BoringVault:Transfer", async (params: any) => {
   try {
+    const { event, context } = params;
+    if (!event.args) return;
+
+    console.log('BoringVault:Transfer event received', event);
+    
     const { from, to, value } = event.args;
     const timestamp = Number(event.block.timestamp);
     const blockNumber = Number(event.block.number);
@@ -196,109 +179,42 @@ ponder.on("BoringVault:Transfer", async ({ event, context }: { event: PonderEven
       return;
     }
     
-    // Get vault data from the contract
-    const totalSupply = await context.contracts.BoringVault.instance.totalSupply();
-    const totalAssets = await context.contracts.BoringVault.instance.totalAssets();
-    
     // Generate unique event ID
     const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
     
-    // Create composite ID for vaultUser (for the recipient)
-    const toVaultUserId = `${event.address.toLowerCase()}-${to.toLowerCase()}`;
-    
-    // Check if recipient vault user record exists
-    const existingToVaultUser = await context.db.findUnique(vaultUser, {
-      where: { id: toVaultUserId },
-    });
-    
-    // Update shares for 'to' address (the recipient)
-    const toUserShares = await context.contracts.BoringVault.instance.balanceOf(to);
-    
-    // Try to get unlock time - this function may not exist in all vault contracts
-    let unlockTime = 0;
-    try {
-      unlockTime = await context.contracts.BoringVault.instance.getUnlockTime(to);
-    } catch (error) {
-      console.log('getUnlockTime function not available, using current time');
-      unlockTime = Math.floor(Date.now() / 1000);
-    }
-    
-    if (existingToVaultUser) {
-      // Update existing record
-      await context.db.update(vaultUser, {
-        where: { id: toVaultUserId },
-        data: {
-          shares: BigInt(toUserShares),
-          unlockTime: new Date(Number(unlockTime) * 1000),
-          lastUpdatedBlock: BigInt(blockNumber),
-        },
-      });
-    } else {
-      // Create new record
-      await context.db.insert(vaultUser, {
-        id: toVaultUserId,
-        userAddress: to.toLowerCase(),
-        vaultAddress: event.address.toLowerCase(),
-        shares: BigInt(toUserShares),
-        unlockTime: new Date(Number(unlockTime) * 1000),
-        lastUpdatedBlock: BigInt(blockNumber),
-      });
-    }
-    
-    // Do the same for the 'from' address (the sender)
-    const fromVaultUserId = `${event.address.toLowerCase()}-${from.toLowerCase()}`;
-    const existingFromVaultUser = await context.db.findUnique(vaultUser, {
-      where: { id: fromVaultUserId },
-    });
-    
-    const fromUserShares = await context.contracts.BoringVault.instance.balanceOf(from);
-    
-    // Try to get unlock time for the sender
-    let fromUnlockTime = 0;
-    try {
-      fromUnlockTime = await context.contracts.BoringVault.instance.getUnlockTime(from);
-    } catch (error) {
-      console.log('getUnlockTime function not available for sender, using current time');
-      fromUnlockTime = Math.floor(Date.now() / 1000);
-    }
-    
-    if (existingFromVaultUser) {
-      // Update existing record
-      await context.db.update(vaultUser, {
-        where: { id: fromVaultUserId },
-        data: {
-          shares: BigInt(fromUserShares),
-          unlockTime: new Date(Number(fromUnlockTime) * 1000),
-          lastUpdatedBlock: BigInt(blockNumber),
-        },
-      });
-    }
+    // Safe handling for addresses
+    const contractAddress = event.log.address.toLowerCase();
+    const safeFromAddress = from && typeof from.toLowerCase === 'function' ? 
+      from.toLowerCase() : String(from);
+    const safeToAddress = to && typeof to.toLowerCase === 'function' ? 
+      to.toLowerCase() : String(to);
     
     // Store raw event data in Supabase
     await safeSupabaseInsert('raw_events', {
       id: eventId,
       event_type: 'Transfer',
-      contract_address: event.address.toLowerCase(),
-      from_address: from.toLowerCase(),
-      to_address: to.toLowerCase(),
-      amount: value.toString(),
+      contract_address: contractAddress,
+      from_address: safeFromAddress,
+      to_address: safeToAddress,
+      amount: value ? value.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000).toISOString(),
-      payload: event,
+      payload: serializeEvent(event),
     });
     
     // Also store in Ponder's raw_event table
-    await context.db.insert(rawEvent, {
+    await context.db.insert(rawEvent).values({
       id: eventId,
-      contractAddress: event.address.toLowerCase(),
+      contractAddress: contractAddress,
       eventName: 'Transfer',
       blockNumber: BigInt(blockNumber),
-      logIndex: event.log.logIndex,
+      logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
       timestamp: new Date(timestamp * 1000),
-      data: event,
+      data: serializeEvent(event),
     });
+    console.log('BoringVault:Transfer event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Transfer event:', error);
   }

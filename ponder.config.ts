@@ -30,10 +30,10 @@ const getStartBlock = (envVarName: string) => {
 const createOptimizedTransport = (url: string) => {
   return http(url, {
     batch: {
-      batchSize: 1,          // Process one request at a time
-      wait: 100,            // Wait longer between batches
+      batchSize: 5,          // Process one request at a time
+      wait: 500,            // Wait longer between batches
     },
-    timeout: 5000,          // 5s timeout
+    timeout: 10000,          // 5s timeout
     retryCount: 0,           // No retries - better to fail fast and let our script handle it
     
     // Handle responses to detect missing blocks
@@ -81,11 +81,8 @@ export default createConfig({
       startBlock: getStartBlock('TELLER_START_BLOCK'),
     },
   },
-  database: isDev ? {
+  database: {
     kind: 'pglite',
-    directory: 'ponder-db'
-  } : {
-    kind: 'postgres',
-    connectionString: process.env.DATABASE_URL + '?sslmode=require',
+    directory: '/Users/archev/Documents/GitHub/vault_monitor/db'
   }
 });

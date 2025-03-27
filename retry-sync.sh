@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Kill any running Ponder processes
-pkill -f "ponder" || true
+# # Kill any running Ponder processes
+# pkill -f "ponder" || true
 
 # Initial starting block
 START_BLOCK=20000000  # Starting just after the failing range (19422983 to 19423033)
@@ -12,13 +12,13 @@ update_env_file() {
   
   cat > .env.temp << EOL
 # Mainnet RPC URL used for fetching blockchain data
-PONDER_RPC_URL_1="http://34.46.182.41:3001/evm"
+PONDER_RPC_URL_1="http://34.57.122.149:3001/evm"
 
 # Postgres database URL for Ponder - pointing to Supabase PostgreSQL
 DATABASE_URL="postgresql://postgres:HjYeGV2Lyr9J4V3T@db.nctdcgedcpptlifinpky.supabase.co:5432/postgres?sslmode=require&pool_timeout=0"
 
 # Base chain RPC
-PONDER_RPC_URL_BASE="http://34.46.182.41:3001/evm"
+PONDER_RPC_URL_BASE="http://34.57.122.149:3001/evm"
 
 # Contract addresses
 BORING_VAULT_ADDRESS="0x208EeF7B7D1AcEa7ED4964d3C5b0c194aDf17412"
@@ -82,10 +82,10 @@ const getStartBlock = (envVarName: string) => {
 const createOptimizedTransport = (url: string) => {
   return http(url, {
     batch: {
-      batchSize: 1,          // Process one request at a time
-      wait: 100,            // Wait longer between batches
+      batchSize: 5,          // Process one request at a time
+      wait: 500,            // Wait longer between batches
     },
-    timeout: 5000,          // 5s timeout
+    timeout: 10000,          // 5s timeout
     retryCount: 0,           // No retries - better to fail fast and let our script handle it
     
     // Handle responses to detect missing blocks
@@ -133,12 +133,9 @@ export default createConfig({
       startBlock: getStartBlock('TELLER_START_BLOCK'),
     },
   },
-  database: isDev ? {
+  database: {
     kind: 'pglite',
-    directory: 'ponder-db'
-  } : {
-    kind: 'postgres',
-    connectionString: process.env.DATABASE_URL + '?sslmode=require',
+    directory: '/Users/archev/Documents/GitHub/vault_monitor/db'
   }
 });
 EOL

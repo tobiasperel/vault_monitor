@@ -29,7 +29,7 @@ app.get("/api/vaults", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -57,7 +57,7 @@ app.get("/api/vault/:id", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -87,7 +87,7 @@ app.get("/api/vault-stats", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -115,7 +115,7 @@ app.get("/api/user-positions", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -147,7 +147,7 @@ app.get("/api/deposits", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -178,7 +178,7 @@ app.get("/api/strategy-executions", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -211,7 +211,7 @@ app.get("/api/risk-metrics", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
@@ -241,7 +241,7 @@ app.get("/api/asset-prices", async (c) => {
       }
     `;
     
-    const result = await fetch(`http://localhost:42069/graphql`, {
+    const result = await fetch(`http://localhost:3002/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
