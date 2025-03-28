@@ -2,4 +2,4 @@
 import './handlers/boringVault';
 import './handlers/felix';
 
-console.log('Vault Monitor indexer is running...'); 
+console.log('feBTC Vault Monitor indexer is running...'); 

@@ -75,7 +75,7 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
       .values({
         id: loanId,
         vaultAddress: vaultAddress,
-        borrowerAddress: borrowerAddress.toLocaleString(),
+        borrowerAddress: borrowerAddress,
         troveId: event.args._troveId,
         ...updateData,
         healthFactor: 1.0, // Will be updated by a separate calculation
@@ -104,7 +104,7 @@ async function storeLoanEvent(context: any, eventId: string, loanId: string, eve
       blockNumber: BigInt(event.block.number),
       timestamp: new Date(Number(event.block.timestamp)),
       transactionHash: event.transaction.hash,
-      borrowerAddress: event.transaction.from.toLocaleString(),
+      borrowerAddress: event.transaction.from,
       troveId: event.args._troveId,
     });
   } catch (error: any) {
@@ -130,7 +130,7 @@ ponder.on("TroveManager:TroveOperation", async (params: any) => {
     
     // Safe handling for addresses
     const contractAddress = event.log.address.toLowerCase();
-    const borrowerAddress = event.transaction.from.toLowerCase();
+    const borrowerAddress = event.transaction.from;
     
     // Skip if no borrower address
     if (!borrowerAddress) {
@@ -187,7 +187,7 @@ ponder.on("TroveManager:TroveUpdated", async (params: any) => {
     
     // Safe handling for addresses
     const contractAddress = event.log.address.toLowerCase();
-    const borrowerAddress = event.transaction.from.toLowerCase();
+    const borrowerAddress = event.transaction.from;
     
     // Skip if no borrower address
     if (!borrowerAddress) {

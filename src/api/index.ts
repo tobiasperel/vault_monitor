@@ -11,7 +11,7 @@ app.use("/graphql", graphql({ db, schema }));
 
 // Example custom endpoint
 app.get("/hello", (c) => {
-  return c.text("Hello, Vault Monitor!");
+  return c.text("Hello, feBTC Vault Monitor!");
 });
 
 // Dashboard API endpoints using GraphQL
