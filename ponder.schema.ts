@@ -243,6 +243,7 @@ export const loanEntity = onchainTable("loan_entity", (t) => ({
   lastEventBlock: t.bigint(),
   lastEventType: t.text(), // 'borrow', 'repay', 'liquidate'
   isActive: t.boolean(),
+  troveId: t.text(),
 }));
 
 // New Loan Event Entity for tracking loan events
@@ -256,4 +257,6 @@ export const loanEventEntity = onchainTable("loan_event_entity", (t) => ({
   blockNumber: t.bigint(),
   timestamp: t.timestamp(),
   transactionHash: t.text(),
+  borrowerAddress: t.text(),
+  troveId: t.text(),
 }));

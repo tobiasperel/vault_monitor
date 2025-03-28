@@ -49,7 +49,7 @@ async function safeSupabaseInsert(table: string, data: any) {
 // Helper function to update vault entity
 async function updateVaultEntity(context: any, vaultAddress: string, event: any, eventType: string) {
   const existingVault = await context.db.find(vaultEntity, { id: vaultAddress });
-  const timestamp = new Date(Number(event.block.timestamp) * 1000);
+  const timestamp = new Date(Number(event.block.timestamp));
   
   if (existingVault && existingVault.length > 0) {
     const vault = existingVault[0];
@@ -88,7 +88,7 @@ async function updateVaultEntity(context: any, vaultAddress: string, event: any,
 async function updateVaultUserEntity(context: any, vaultAddress: string, userAddress: string, event: any, eventType: string) {
   const userId = `${vaultAddress}-${userAddress}`;
   const existingUser = await context.db.find(vaultUserEntity, { id: userId });
-  const timestamp = new Date(Number(event.block.timestamp) * 1000);
+  const timestamp = new Date(Number(event.block.timestamp));
   
   if (existingUser && existingUser.length > 0) {
     const user = existingUser[0];
@@ -172,7 +172,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: new Date(timestamp),
       data: serializeEvent(event),
     });
 
@@ -185,7 +185,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       shares: BigInt(shares || 0),
       user: safeUserAddress,
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: new Date(timestamp),
       transactionHash: event.transaction.hash,
     });
 

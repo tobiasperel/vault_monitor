@@ -63,7 +63,7 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
     outstandingDebt: BigInt(event.args._debt || event.args._debtChangeFromOperation || 0),
     collateralAmount: BigInt(event.args._coll || event.args._collChangeFromOperation || 0),
     interestRate: BigInt(event.args._annualInterestRate || 0),
-    lastEventTimestamp: new Date(Number(event.block.timestamp) * 1000),
+    lastEventTimestamp: new Date(Number(event.block.timestamp)),
     lastEventBlock: BigInt(event.block.number),
     lastEventType: eventType,
     isActive: true,
@@ -75,7 +75,8 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
       .values({
         id: loanId,
         vaultAddress: vaultAddress,
-        borrowerAddress: borrowerAddress,
+        borrowerAddress: borrowerAddress.toLocaleString(),
+        troveId: event.args._troveId,
         ...updateData,
         healthFactor: 1.0, // Will be updated by a separate calculation
       })
@@ -101,8 +102,10 @@ async function storeLoanEvent(context: any, eventId: string, loanId: string, eve
       collateralChange: BigInt(event.args._collChangeFromOperation || event.args._collChange || 0),
       healthFactorAfter: 1.0, // Will be updated by a separate calculation
       blockNumber: BigInt(event.block.number),
-      timestamp: new Date(Number(event.block.timestamp) * 1000),
+      timestamp: new Date(Number(event.block.timestamp)),
       transactionHash: event.transaction.hash,
+      borrowerAddress: event.transaction.from.toLocaleString(),
+      troveId: event.args._troveId,
     });
   } catch (error: any) {
     if (!error?.message?.includes('duplicate key')) {

@@ -42,7 +42,6 @@ async function fetchData(query) {
     
     if (!response.ok) {
       console.error(`GraphQL response not OK: ${response.status} ${response.statusText}`);
-      showErrorMessage(`Failed to fetch data: ${response.status} ${response.statusText}`);
       return null;
     }
     
@@ -65,7 +64,6 @@ async function fetchData(query) {
     return data.data;
   } catch (error) {
     console.error('Error fetching data:', error);
-    showErrorMessage(`Failed to fetch data: ${error.message}`);
     return null;
   }
 }
@@ -224,7 +222,6 @@ async function loadDashboardData() {
     
   } catch (error) {
     console.error('Error loading dashboard data:', error);
-    showErrorMessage(`Failed to load dashboard data: ${error.message}`);
   }
 }
 
@@ -266,7 +263,7 @@ async function loadVaults() {
     row.innerHTML = `
       <td>${formatAddress(vault.id)}</td>
       <td>${formatEth(vault.totalAssets)}</td>
-      <td>${formatEth(vault.totalShares)}</td>
+      <td>${Number(vault.totalShares / 1e26).toFixed(0)}</td>
       <td>${vault.depositCount}</td>
       <td>${vault.withdrawCount}</td>
       <td>${vault.userCount}</td>
@@ -278,7 +275,7 @@ async function loadVaults() {
   // Update summary cards
   if (vaults.length > 0) {
     document.getElementById('total-assets').textContent = formatEth(vaults[0].totalAssets);
-    document.getElementById('total-shares').textContent = formatEth(vaults[0].totalShares);
+    document.getElementById('total-shares').textContent = Number(vaults[0].totalShares / 1e26).toFixed(0);
     document.getElementById('active-users').textContent = vaults[0].userCount;
     // Update risk score or other metrics if available
     document.getElementById('risk-score').textContent = "Low";  // Placeholder
@@ -332,7 +329,7 @@ async function loadVaultEvents() {
       <td>${event.eventType}</td>
       <td>${formatAddress(event.user)}</td>
       <td>${formatEth(event.amount)}</td>
-      <td>${formatEth(event.shares)}</td>
+      <td>${Number(event.shares / 1e26).toFixed(0)}</td>
       <td>${formatTimestamp(event.timestamp)}</td>
     `;
     eventsTable.appendChild(row);
@@ -378,11 +375,11 @@ async function loadVaultUsers() {
     row.innerHTML = `
       <td>${formatAddress(user.userAddress)}</td>
       <td>${formatAddress(user.vaultAddress)}</td>
-      <td>${formatEth(user.shares)}</td>
+      <td>${Number(user.shares / 1e26).toFixed(0)}</td>
       <td>${user.depositCount}</td>
       <td>${user.withdrawCount}</td>
       <td>${formatTimestamp(user.lastActionTimestamp)}</td>
-      <td>${user.unlockTime ? formatTimestamp(user.unlockTime) : 'N/A'}</td>
+      <td>${'-'}</td>
     `;
     usersTable.appendChild(row);
   });
@@ -391,7 +388,7 @@ async function loadVaultUsers() {
 async function loadLoans() {
   const query = `
     query {
-      loanEntitys(orderBy: "outstandingDebt", limit: 10) {
+      loanEntitys(orderBy: "outstandingDebt", where : { troveId: "89525146906988220792411652990398345341068978671588796020019971138892647634396"}) {
         items {
           id
           borrowerAddress
@@ -402,6 +399,7 @@ async function loadLoans() {
           isActive
           lastEventType
           lastEventTimestamp
+          troveId
         }
       }
     }
@@ -426,11 +424,11 @@ async function loadLoans() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${formatAddress(loan.id)}</td>
-      <td>${formatAddress(loan.borrowerAddress)}</td>
+      <td>${formatAddress(loan.troveId)}</td>
       <td>${formatEth(loan.outstandingDebt)}</td>
       <td>${formatEth(loan.collateralAmount)}</td>
       <td>${formatNumber(loan.healthFactor)}</td>
-      <td>${formatNumber(loan.interestRate / 100)}%</td>
+      <td>${formatNumber(loan.interestRate / 1e16)}%</td>
       <td>${loan.isActive ? 'Active' : 'Closed'}</td>
     `;
     loansTable.appendChild(row);
@@ -452,9 +450,10 @@ async function loadLoans() {
 async function loadLoanEvents() {
   const query = `
     query {
-      loanEventEntitys(orderBy: "timestamp", limit: 10) {
+      loanEventEntitys(orderBy: "timestamp", where : { troveId: "89525146906988220792411652990398345341068978671588796020019971138892647634396"}) {
         items {
           id
+          borrowerAddress
           transactionHash
           loanId
           eventType
@@ -462,6 +461,7 @@ async function loadLoanEvents() {
           collateralChange
           healthFactorAfter
           timestamp
+          troveId
         }
       }
     }
@@ -486,7 +486,7 @@ async function loadLoanEvents() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${formatAddress(event.transactionHash)}</td>
-      <td>${formatAddress(event.loanId)}</td>
+      <td>${formatAddress(event.troveId)}</td>
       <td>${event.eventType}</td>
       <td>${formatEth(event.debtChange)}</td>
       <td>${formatEth(event.collateralChange)}</td>
