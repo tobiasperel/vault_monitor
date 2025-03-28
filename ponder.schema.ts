@@ -188,3 +188,72 @@ export const rawEvent = onchainTable("raw_event", (t) => ({
   timestamp: t.timestamp(),
   data: t.json(),
 }));
+
+// New Vault Entity for tracking vault metrics
+export const vaultEntity = onchainTable("vault_entity", (t) => ({
+  id: t.text().primaryKey(), // vault address
+  totalAssets: t.bigint(),
+  totalShares: t.bigint(),
+  depositCount: t.integer(),
+  withdrawCount: t.integer(),
+  userCount: t.integer(),
+  lastEventTimestamp: t.timestamp(),
+  lastEventBlock: t.bigint(),
+  lastEventType: t.text(), // 'deposit', 'withdraw', 'transfer'
+  lastEventAmount: t.bigint(),
+  lastEventUser: t.text(),
+}));
+
+// New Vault Event Entity for tracking vault events
+export const vaultEventEntity = onchainTable("vault_event_entity", (t) => ({
+  id: t.text().primaryKey(), // tx_hash-log_index
+  vaultAddress: t.text(),
+  eventType: t.text(), // 'deposit', 'withdraw', 'transfer'
+  amount: t.bigint(),
+  shares: t.bigint(),
+  user: t.text(),
+  blockNumber: t.bigint(),
+  timestamp: t.timestamp(),
+  transactionHash: t.text(),
+}));
+
+// New Vault User Entity for tracking user positions
+export const vaultUserEntity = onchainTable("vault_user_entity", (t) => ({
+  id: t.text().primaryKey(), // vault_address-user_address
+  vaultAddress: t.text(),
+  userAddress: t.text(),
+  shares: t.bigint(),
+  depositCount: t.integer(),
+  withdrawCount: t.integer(),
+  lastActionTimestamp: t.timestamp(),
+  unlockTime: t.timestamp(),
+  isActive: t.boolean(),
+}));
+
+// New Loan Entity specifically for BoringVault
+export const loanEntity = onchainTable("loan_entity", (t) => ({
+  id: t.text().primaryKey(), // vault_address-borrower_address
+  vaultAddress: t.text(),
+  borrowerAddress: t.text(),
+  outstandingDebt: t.bigint(),
+  collateralAmount: t.bigint(),
+  healthFactor: t.real(),
+  interestRate: t.bigint(),
+  lastEventTimestamp: t.timestamp(),
+  lastEventBlock: t.bigint(),
+  lastEventType: t.text(), // 'borrow', 'repay', 'liquidate'
+  isActive: t.boolean(),
+}));
+
+// New Loan Event Entity for tracking loan events
+export const loanEventEntity = onchainTable("loan_event_entity", (t) => ({
+  id: t.text().primaryKey(), // tx_hash-log_index
+  loanId: t.text(), // vault_address-borrower_address
+  eventType: t.text(), // 'borrow', 'repay', 'liquidate'
+  debtChange: t.bigint(),
+  collateralChange: t.bigint(),
+  healthFactorAfter: t.real(),
+  blockNumber: t.bigint(),
+  timestamp: t.timestamp(),
+  transactionHash: t.text(),
+}));

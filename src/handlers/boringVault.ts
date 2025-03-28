@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 // Import the schema tables
 // @ts-ignore - ignore missing type declarations
-import { vault, vaultUser, rawEvent, deposit } from "../../ponder.schema";
+import { vault, vaultUser, rawEvent, deposit, vaultEntity, vaultEventEntity, vaultUserEntity } from "../../ponder.schema";
 
 // Initialize Supabase client if credentials are provided
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -43,6 +43,75 @@ async function safeSupabaseInsert(table: string, data: any) {
     } catch (error) {
       console.error(`Error inserting into Supabase table ${table}:`, error);
     }
+  }
+}
+
+// Helper function to update vault entity
+async function updateVaultEntity(context: any, vaultAddress: string, event: any, eventType: string) {
+  const existingVault = await context.db.find(vaultEntity, { id: vaultAddress });
+  const timestamp = new Date(Number(event.block.timestamp) * 1000);
+  
+  if (existingVault && existingVault.length > 0) {
+    const vault = existingVault[0];
+    await context.db.update(vaultEntity).values({
+      where: { id: vaultAddress },
+      data: {
+        depositCount: eventType === 'deposit' ? vault.depositCount + 1 : vault.depositCount,
+        withdrawCount: eventType === 'withdraw' ? vault.withdrawCount + 1 : vault.withdrawCount,
+        lastEventTimestamp: timestamp,
+        lastEventBlock: BigInt(event.block.number),
+        lastEventType: eventType,
+        lastEventAmount: BigInt(event.args.amount || 0),
+        lastEventUser: event.args.from || event.args.to || '',
+      },
+    });
+  } else {
+    await context.db.insert(vaultEntity).values({
+      id: vaultAddress,
+      totalAssets: BigInt(0),
+      totalShares: BigInt(0),
+      depositCount: eventType === 'deposit' ? 1 : 0,
+      withdrawCount: eventType === 'withdraw' ? 1 : 0,
+      userCount: 1,
+      lastEventTimestamp: timestamp,
+      lastEventBlock: BigInt(event.block.number),
+      lastEventType: eventType,
+      lastEventAmount: BigInt(event.args.amount || 0),
+      lastEventUser: event.args.from || event.args.to || '',
+    });
+  }
+}
+
+// Helper function to update vault user entity
+async function updateVaultUserEntity(context: any, vaultAddress: string, userAddress: string, event: any, eventType: string) {
+  const userId = `${vaultAddress}-${userAddress}`;
+  const existingUser = await context.db.find(vaultUserEntity, { id: userId });
+  const timestamp = new Date(Number(event.block.timestamp) * 1000);
+  
+  if (existingUser && existingUser.length > 0) {
+    const user = existingUser[0];
+    await context.db.update(vaultUserEntity).values({
+      where: { id: userId },
+      data: {
+        shares: BigInt(event.args.shares || 0),
+        depositCount: eventType === 'deposit' ? user.depositCount + 1 : user.depositCount,
+        withdrawCount: eventType === 'withdraw' ? user.withdrawCount + 1 : user.withdrawCount,
+        lastActionTimestamp: timestamp,
+        isActive: true,
+      },
+    });
+  } else {
+    await context.db.insert(vaultUserEntity).values({
+      id: userId,
+      vaultAddress: vaultAddress,
+      userAddress: userAddress,
+      shares: BigInt(event.args.shares || 0),
+      depositCount: eventType === 'deposit' ? 1 : 0,
+      withdrawCount: eventType === 'withdraw' ? 1 : 0,
+      lastActionTimestamp: timestamp,
+      unlockTime: new Date(0), // No lock time for BoringVault
+      isActive: true,
+    });
   }
 }
 
@@ -104,6 +173,26 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       timestamp: new Date(timestamp * 1000),
       data: serializeEvent(event),
     });
+
+    // Store vault event
+    await context.db.insert(vaultEventEntity).values({
+      id: eventId,
+      vaultAddress: contractAddress,
+      eventType: 'deposit',
+      amount: BigInt(amount || 0),
+      shares: BigInt(shares || 0),
+      user: safeUserAddress,
+      blockNumber: BigInt(blockNumber),
+      timestamp: new Date(timestamp * 1000),
+      transactionHash: event.transaction.hash,
+    });
+
+    // Update vault entity
+    await updateVaultEntity(context, contractAddress, event, 'deposit');
+
+    // Update vault user entity
+    await updateVaultUserEntity(context, contractAddress, safeUserAddress, event, 'deposit');
+    
     console.log('BoringVault:Enter event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Enter event:', error);
@@ -153,6 +242,26 @@ ponder.on("BoringVault:Exit", async (params: any) => {
       timestamp: new Date(timestamp * 1000),
       data: serializeEvent(event),
     });
+
+    // Store vault event
+    await context.db.insert(vaultEventEntity).values({
+      id: eventId,
+      vaultAddress: contractAddress,
+      eventType: 'withdraw',
+      amount: BigInt(amount || 0),
+      shares: BigInt(shares || 0),
+      user: safeUserAddress,
+      blockNumber: BigInt(blockNumber),
+      timestamp: new Date(timestamp * 1000),
+      transactionHash: event.transaction.hash,
+    });
+
+    // Update vault entity
+    await updateVaultEntity(context, contractAddress, event, 'withdraw');
+
+    // Update vault user entity
+    await updateVaultUserEntity(context, contractAddress, safeUserAddress, event, 'withdraw');
+    
     console.log('BoringVault:Exit event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Exit event:', error);
@@ -211,6 +320,27 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
       timestamp: new Date(timestamp * 1000),
       data: serializeEvent(event),
     });
+
+    // Store vault event
+    await context.db.insert(vaultEventEntity).values({
+      id: eventId,
+      vaultAddress: contractAddress,
+      eventType: 'transfer',
+      amount: BigInt(value || 0),
+      shares: BigInt(value || 0),
+      user: safeFromAddress,
+      blockNumber: BigInt(blockNumber),
+      timestamp: new Date(timestamp * 1000),
+      transactionHash: event.transaction.hash,
+    });
+
+    // Update vault entity
+    await updateVaultEntity(context, contractAddress, event, 'transfer');
+
+    // Update vault user entities for both from and to addresses
+    await updateVaultUserEntity(context, contractAddress, safeFromAddress, event, 'transfer');
+    await updateVaultUserEntity(context, contractAddress, safeToAddress, event, 'transfer');
+    
     console.log('BoringVault:Transfer event processed');
   } catch (error) {
     console.error('Error processing BoringVault:Transfer event:', error);
