@@ -423,13 +423,13 @@ async function loadLoans() {
   loans.forEach(loan => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${formatAddress(loan.id)}</td>
       <td>${formatAddress(loan.troveId)}</td>
       <td>${formatEth(loan.outstandingDebt)}</td>
       <td>${formatEth(loan.collateralAmount)}</td>
       <td>${formatNumber(loan.healthFactor)}</td>
       <td>${formatNumber(loan.interestRate / 1e16)}%</td>
       <td>${loan.isActive ? 'Active' : 'Closed'}</td>
+      <td>${formatTimestamp(loan.lastEventTimestamp)}</td>
     `;
     loansTable.appendChild(row);
   });
