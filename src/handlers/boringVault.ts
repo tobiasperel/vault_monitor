@@ -63,13 +63,15 @@ async function updateVaultEntity(context: any, vaultAddress: string, event: any,
         lastEventType: eventType,
         lastEventAmount: BigInt(event.args.amount || 0),
         lastEventUser: event.args.from || event.args.to || '',
+        totalAssets: vault.totalAssets + BigInt(event.args.amount || 0),
+        totalShares: vault.totalShares + BigInt(event.args.shares || 0),
       },
     });
   } else {
     await context.db.insert(vaultEntity).values({
       id: vaultAddress,
-      totalAssets: BigInt(0),
-      totalShares: BigInt(0),
+      totalAssets: BigInt(event.args.amount || 0),
+      totalShares: BigInt(event.args.shares || 0),
       depositCount: eventType === 'deposit' ? 1 : 0,
       withdrawCount: eventType === 'withdraw' ? 1 : 0,
       userCount: 1,
@@ -121,7 +123,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-    
+    console.log('BoringVault:Enter event received', event);
     const { from, asset, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
     const blockNumber = Number(event.block.number);
@@ -205,6 +207,7 @@ ponder.on("BoringVault:Exit", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
+    console.log('BoringVault:Exit event received', event);
     
     const { user, token, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);

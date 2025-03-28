@@ -57,7 +57,7 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
   }
 
   const loanId = `${vaultAddress}-${borrowerAddress}`;
-  console.log(`Processing loan entity ${loanId} for event type ${eventType}`);
+  // console.log(`Processing loan entity ${loanId} for event type ${eventType}`);
 
   const updateData = {
     outstandingDebt: BigInt(event.args._debt || event.args._debtChangeFromOperation || 0),
@@ -83,7 +83,7 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
         updateData
       });
     
-    console.log(`Upserted loan entity ${loanId}`);
+    // console.log(`Upserted loan entity ${loanId}`);
   } catch (error: any) {
     console.error(`Error upserting loan entity ${loanId}:`, error);
     throw error;

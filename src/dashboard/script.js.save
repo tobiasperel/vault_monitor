@@ -1,7 +1,6 @@
+^C
+sed -i '' '/Check if we.*re in a browser environment/,/module.exports/d' src/dashboard/script.js
 // Dashboard JavaScript
-
-// Check if we're in a browser environment
-const isBrowser = typeof document !== 'undefined';
 
 // Utility functions
 function formatNumber(num, decimals = 2) {
@@ -27,12 +26,10 @@ function formatEth(wei) {
   return (Number(wei) / 1e18).toFixed(4);
 }
 
-// API Functions
+// Fetch data functions
 async function fetchData(query) {
   try {
-    console.log('Attempting to fetch from GraphQL endpoint... Query:', query.trim().substring(0, 100) + '...');
-    
-    const response = await fetch('http://localhost:3002/graphql', {
+    const response = await fetch('http://localhost:42069/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,40 +37,20 @@ async function fetchData(query) {
       body: JSON.stringify({ query }),
     });
     
-    if (!response.ok) {
-      console.error(`GraphQL response not OK: ${response.status} ${response.statusText}`);
-      showErrorMessage(`Failed to fetch data: ${response.status} ${response.statusText}`);
-      return null;
-    }
-    
     const data = await response.json();
-    console.log('GraphQL response received:', data);
-    
     if (data.errors) {
-      console.error('GraphQL errors:', JSON.stringify(data.errors));
-      showErrorMessage(`GraphQL errors: ${data.errors.map(e => e.message).join(', ')}`);
+      console.error('GraphQL errors:', data.errors);
       return null;
     }
-    
-    if (!data.data) {
-      console.error('No data returned from GraphQL');
-      showErrorMessage('No data returned from GraphQL');
-      return null;
-    }
-    
-    console.log('Successfully fetched data:', JSON.stringify(data.data).substring(0, 200) + '...');
     return data.data;
   } catch (error) {
     console.error('Error fetching data:', error);
-    showErrorMessage(`Failed to fetch data: ${error.message}`);
     return null;
   }
 }
 
 // Show error message on dashboard
 function showErrorMessage(message) {
-  if (!isBrowser) return;
-  
   const errorContainer = document.getElementById('error-container');
   if (!errorContainer) {
     // Create error container if it doesn't exist
@@ -115,78 +92,10 @@ function showErrorMessage(message) {
 
 // Clear error messages
 function clearErrorMessages() {
-  if (!isBrowser) return;
-  
   const errorContainer = document.getElementById('error-container');
   if (errorContainer) {
     errorContainer.style.display = 'none';
     errorContainer.innerHTML = '';
-  }
-}
-
-// Update last updated timestamp
-function updateLastUpdated() {
-  if (!isBrowser) return;
-  
-  const lastUpdatedElement = document.getElementById('last-updated');
-  if (lastUpdatedElement) {
-    const now = new Date();
-    lastUpdatedElement.textContent = `Last updated: ${now.toLocaleString()}`;
-  }
-}
-
-// Calculate and update risk metrics
-function updateRiskMetrics(loans = []) {
-  if (!isBrowser) return;
-  
-  // Calculate average health factor
-  let totalHealthFactor = 0;
-  let loansNearLiquidation = 0;
-  let totalCollateral = 0;
-  
-  if (loans.length > 0) {
-    loans.forEach(loan => {
-      const healthFactor = Number(loan.healthFactor) || 0;
-      totalHealthFactor += healthFactor;
-      
-      // Count loans with health factor < 1.2 as near liquidation
-      if (healthFactor > 0 && healthFactor < 1) {
-        loansNearLiquidation++;
-      }
-      
-      totalCollateral += Number(loan.collateralAmount) || 0;
-    });
-    
-    const avgHealthFactor = totalHealthFactor / loans.length;
-    
-    // Update UI elements
-    document.getElementById('avg-health-factor').textContent = formatNumber(avgHealthFactor);
-    document.getElementById('loans-near-liquidation').textContent = loansNearLiquidation;
-    document.getElementById('total-collateral').textContent = formatEth(totalCollateral.toString());
-    
-    // Update risk score based on metrics
-    let riskLevel = "Low";
-    let riskClass = "bg-success";
-    let riskWidth = "25%";
-    
-    if (loansNearLiquidation > 0 || avgHealthFactor < 1.5) {
-      riskLevel = "High";
-      riskClass = "bg-danger";
-      riskWidth = "75%";
-    } else if (avgHealthFactor < 2.0) {
-      riskLevel = "Medium";
-      riskClass = "bg-warning";
-      riskWidth = "50%";
-    }
-    
-    const riskBar = document.getElementById('risk-score-bar');
-    if (riskBar) {
-      riskBar.className = `progress-bar ${riskClass}`;
-      riskBar.style.width = riskWidth;
-      riskBar.textContent = riskLevel;
-      
-      document.getElementById('risk-score').textContent = riskLevel;
-    }
   }
 }
 
@@ -196,31 +105,26 @@ async function loadDashboardData() {
     // Clear previous errors
     clearErrorMessages();
     
-    if (isBrowser) {
-      // Update loading state
-      document.querySelectorAll('tbody').forEach(tbody => {
-        if (tbody.children.length === 0 || 
-            (tbody.children.length === 1 && tbody.children[0].textContent.includes('No data'))) {
-          tbody.innerHTML = '<tr><td colspan="10" class="text-center">Loading data...</td></tr>';
-        }
-      });
-
-      // Load all data in parallel
-      await Promise.all([
-        loadVaults(),
-        loadVaultEvents(),
-        loadVaultUsers(),
-        loadLoans(),
-        loadLoanEvents()
-      ]);
-      
-      // Create charts
-      createVaultActivityChart();
-      createLoanHealthChart();
-      
-      // Update last updated timestamp
-      updateLastUpdated();
-    }
+    // Update loading state
+    document.querySelectorAll('tbody').forEach(tbody => {
+      if (tbody.children.length === 0 || 
+          (tbody.children.length === 1 && tbody.children[0].textContent.includes('No data'))) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Loading data...</td></tr>';
+      }
+    });
+    
+    // Load all data in parallel
+    await Promise.all([
+      loadVaults(),
+      loadVaultEvents(),
+      loadVaultUsers(),
+      loadLoans(),
+      loadLoanEvents()
+    ]);
+    
+    // Create charts
+    createVaultActivityChart();
+    createLoanHealthChart();
     
   } catch (error) {
     console.error('Error loading dashboard data:', error);
@@ -240,22 +144,19 @@ async function loadVaults() {
           depositCount
           withdrawCount
           userCount
-          lastEventTimestamp
         }
       }
     }
   `;
   
   const data = await fetchData(query);
-  if (!data || !isBrowser) return;
+  if (!data) return;
   
   const vaults = data.vaultEntitys.items;
   const vaultsTable = document.getElementById('vaults-table');
   
-  if (!vaultsTable) return;
-  
   if (vaults.length === 0) {
-    vaultsTable.innerHTML = '<tr><td colspan="7" class="text-center">No vaults found</td></tr>';
+    vaultsTable.innerHTML = '<tr><td colspan="6" class="text-center">No vaults found</td></tr>';
     return;
   }
   
@@ -270,7 +171,6 @@ async function loadVaults() {
       <td>${vault.depositCount}</td>
       <td>${vault.withdrawCount}</td>
       <td>${vault.userCount}</td>
-      <td>${formatTimestamp(vault.lastEventTimestamp)}</td>
     `;
     vaultsTable.appendChild(row);
   });
@@ -280,25 +180,19 @@ async function loadVaults() {
     document.getElementById('total-assets').textContent = formatEth(vaults[0].totalAssets);
     document.getElementById('total-shares').textContent = formatEth(vaults[0].totalShares);
     document.getElementById('active-users').textContent = vaults[0].userCount;
-    // Update risk score or other metrics if available
-    document.getElementById('risk-score').textContent = "Low";  // Placeholder
-    
-    // Update outstanding debt in summary card
-    const outstandingDebtElement = document.getElementById('outstanding-debt');
-    if (outstandingDebtElement) {
-      outstandingDebtElement.textContent = "0"; // Will be updated by loadLoans
-    }
   }
 }
 
 async function loadVaultEvents() {
   const query = `
     query {
-      vaultEventEntitys(orderBy: "timestamp", limit: 10) {
+      vaultEventEntitys(orderBy: timestamp_DESC, limit: 10) {
         items {
           id
           transactionHash
-          vaultAddress
+          vault {
+            id
+          }
           eventType
           user
           amount
@@ -310,7 +204,7 @@ async function loadVaultEvents() {
   `;
   
   const data = await fetchData(query);
-  if (!data || !isBrowser) return;
+  if (!data) return;
   
   const events = data.vaultEventEntitys?.items || [];
   const eventsTable = document.getElementById('vault-events-table');
@@ -328,7 +222,7 @@ async function loadVaultEvents() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${formatAddress(event.transactionHash)}</td>
-      <td>${formatAddress(event.vaultAddress)}</td>
+      <td>${formatAddress(event.vault?.id)}</td>
       <td>${event.eventType}</td>
       <td>${formatAddress(event.user)}</td>
       <td>${formatEth(event.amount)}</td>
@@ -342,24 +236,25 @@ async function loadVaultEvents() {
 async function loadVaultUsers() {
   const query = `
     query {
-      vaultUserEntitys(orderBy: "shares", limit: 10) {
+      vaultUserEntitys(orderBy: shares_DESC, limit: 10) {
         items {
           id
-          userAddress
-          vaultAddress
+          user
+          vault {
+            id
+          }
           shares
           depositCount
           withdrawCount
-          lastActionTimestamp
+          lastActivityTimestamp
           unlockTime
-          isActive
         }
       }
     }
   `;
   
   const data = await fetchData(query);
-  if (!data || !isBrowser) return;
+  if (!data) return;
   
   const users = data.vaultUserEntitys?.items || [];
   const usersTable = document.getElementById('vault-users-table');
@@ -376,12 +271,12 @@ async function loadVaultUsers() {
   users.forEach(user => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${formatAddress(user.userAddress)}</td>
-      <td>${formatAddress(user.vaultAddress)}</td>
+      <td>${formatAddress(user.user)}</td>
+      <td>${formatAddress(user.vault?.id)}</td>
       <td>${formatEth(user.shares)}</td>
       <td>${user.depositCount}</td>
       <td>${user.withdrawCount}</td>
-      <td>${formatTimestamp(user.lastActionTimestamp)}</td>
+      <td>${formatTimestamp(user.lastActivityTimestamp)}</td>
       <td>${user.unlockTime ? formatTimestamp(user.unlockTime) : 'N/A'}</td>
     `;
     usersTable.appendChild(row);
@@ -391,24 +286,22 @@ async function loadVaultUsers() {
 async function loadLoans() {
   const query = `
     query {
-      loanEntitys(orderBy: "outstandingDebt", limit: 10) {
+      loanEntitys(orderBy: debt_DESC, limit: 10) {
         items {
           id
-          borrowerAddress
-          outstandingDebt
-          collateralAmount
+          borrower
+          debt
+          collateral
           healthFactor
           interestRate
-          isActive
-          lastEventType
-          lastEventTimestamp
+          status
         }
       }
     }
   `;
   
   const data = await fetchData(query);
-  if (!data || !isBrowser) return;
+  if (!data) return;
   
   const loans = data.loanEntitys?.items || [];
   const loansTable = document.getElementById('loans-table');
@@ -426,33 +319,27 @@ async function loadLoans() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${formatAddress(loan.id)}</td>
-      <td>${formatAddress(loan.borrowerAddress)}</td>
-      <td>${formatEth(loan.outstandingDebt)}</td>
-      <td>${formatEth(loan.collateralAmount)}</td>
+      <td>${formatAddress(loan.borrower)}</td>
+      <td>${formatEth(loan.debt)}</td>
+      <td>${formatEth(loan.collateral)}</td>
       <td>${formatNumber(loan.healthFactor)}</td>
-      <td>${formatNumber(loan.interestRate / 100)}%</td>
-      <td>${loan.isActive ? 'Active' : 'Closed'}</td>
+      <td>${formatNumber(loan.interestRate)}%</td>
+      <td>${loan.status}</td>
     `;
     loansTable.appendChild(row);
   });
   
   // Update outstanding debt in summary card
   if (loans.length > 0) {
-    const totalDebt = loans.reduce((sum, loan) => sum + Number(loan.outstandingDebt || 0), 0);
-    const outstandingDebtElement = document.getElementById('outstanding-debt');
-    if (outstandingDebtElement) {
-      outstandingDebtElement.textContent = formatEth(totalDebt.toString());
-    }
-    
-    // Update risk metrics
-    updateRiskMetrics(loans);
+    const totalDebt = loans.reduce((sum, loan) => sum + Number(loan.debt || 0), 0);
+    document.getElementById('outstanding-debt').textContent = formatEth(totalDebt.toString());
   }
 }
 
 async function loadLoanEvents() {
   const query = `
     query {
-      loanEventEntitys(orderBy: "timestamp", limit: 10) {
+      loanEventEntitys(orderBy: timestamp_DESC, limit: 10) {
         items {
           id
           transactionHash
@@ -460,7 +347,7 @@ async function loadLoanEvents() {
           eventType
           debtChange
           collateralChange
-          healthFactorAfter
+          healthFactor
           timestamp
         }
       }
@@ -468,7 +355,7 @@ async function loadLoanEvents() {
   `;
   
   const data = await fetchData(query);
-  if (!data || !isBrowser) return;
+  if (!data) return;
   
   const events = data.loanEventEntitys?.items || [];
   const eventsTable = document.getElementById('loan-events-table');
@@ -490,7 +377,7 @@ async function loadLoanEvents() {
       <td>${event.eventType}</td>
       <td>${formatEth(event.debtChange)}</td>
       <td>${formatEth(event.collateralChange)}</td>
-      <td>${formatNumber(event.healthFactorAfter)}</td>
+      <td>${formatNumber(event.healthFactor)}</td>
       <td>${formatTimestamp(event.timestamp)}</td>
     `;
     eventsTable.appendChild(row);
@@ -499,8 +386,6 @@ async function loadLoanEvents() {
 
 // Chart creation
 function createVaultActivityChart() {
-  if (!isBrowser) return;
-  
   const ctx = document.getElementById('vaultActivityChart');
   if (!ctx) return;
   
@@ -536,8 +421,6 @@ function createVaultActivityChart() {
 }
 
 function createLoanHealthChart() {
-  if (!isBrowser) return;
-  
   const ctx = document.getElementById('loanHealthChart');
   if (!ctx) return;
   
@@ -574,17 +457,17 @@ function initDashboard() {
   
   // Refresh data every 60 seconds
   setInterval(loadDashboardData, 60000);
-  
-  // Add refresh button event listener
-  const refreshButton = document.getElementById('refresh-btn');
-  if (refreshButton) {
-    refreshButton.addEventListener('click', loadDashboardData);
-  }
 }
 
-// Start dashboard when DOM is loaded (only in browser environment)
-if (isBrowser) {
-  document.addEventListener('DOMContentLoaded', initDashboard);
+// Start dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', initDashboard);
+
+// Check if we're in a browser environment
+if (typeof document !== 'undefined') {
+  // Browser environment - add event listener
+  document.addEventListener('DOMContentLoaded', () => {
+    initDashboard();
+  });
 } else {
   // Node.js environment - export functions
   console.log('Dashboard script loaded in Node.js environment');

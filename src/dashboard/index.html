@@ -29,23 +29,28 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#deposits">
-                <i class="bi bi-wallet"></i> Deposits
+              <a class="nav-link" href="#vault-events">
+                <i class="bi bi-wallet"></i> Vault Activity
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#strategies">
-                <i class="bi bi-graph-up"></i> Strategies
+              <a class="nav-link" href="#vault-users">
+                <i class="bi bi-people"></i> Vault Users
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#loans">
+                <i class="bi bi-cash-coin"></i> Loans
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#loan-events">
+                <i class="bi bi-activity"></i> Loan Activity
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#risk">
                 <i class="bi bi-shield"></i> Risk Metrics
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#prices">
-                <i class="bi bi-currency-exchange"></i> Asset Prices
               </a>
             </li>
           </ul>
@@ -57,20 +62,14 @@
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 class="h2">Vault Monitor Dashboard</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-              <i class="bi bi-calendar"></i> This week
-            </button>
+            <span class="text-muted" id="last-updated">Last updated: Never</span>
           </div>
         </div>
 
         <!-- Summary Cards -->
         <div class="row mb-4">
           <div class="col-xl-3 col-md-6">
-            <div class="card bg-primary text-white mb-4">
+            <div class="card bg-dark text-white mb-4">
               <div class="card-body">
                 <h5>Total Assets</h5>
                 <h2 id="total-assets">-</h2>
@@ -100,7 +99,7 @@
                 <h2 id="active-users">-</h2>
               </div>
               <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#users">View Details</a>
+                <a class="small text-white stretched-link" href="#vault-users">View Details</a>
                 <i class="bi bi-arrow-right text-white"></i>
               </div>
             </div>
@@ -108,11 +107,11 @@
           <div class="col-xl-3 col-md-6">
             <div class="card bg-danger text-white mb-4">
               <div class="card-body">
-                <h5>Risk Score</h5>
-                <h2 id="risk-score">-</h2>
+                <h5>Outstanding Debt</h5>
+                <h2 id="outstanding-debt">-</h2>
               </div>
               <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#risk">View Details</a>
+                <a class="small text-white stretched-link" href="#loans">View Details</a>
                 <i class="bi bi-arrow-right text-white"></i>
               </div>
             </div>
@@ -125,10 +124,10 @@
             <div class="card mb-4">
               <div class="card-header">
                 <i class="bi bi-bar-chart-fill me-1"></i>
-                Asset Performance
+                Vault Activity
               </div>
               <div class="card-body">
-                <canvas id="assetChart" width="100%" height="40"></canvas>
+                <canvas id="vaultActivityChart" width="100%" height="40"></canvas>
               </div>
             </div>
           </div>
@@ -136,10 +135,10 @@
             <div class="card mb-4">
               <div class="card-header">
                 <i class="bi bi-graph-up me-1"></i>
-                Strategy Returns
+                Loan Health
               </div>
               <div class="card-body">
-                <canvas id="strategyChart" width="100%" height="40"></canvas>
+                <canvas id="loanHealthChart" width="100%" height="40"></canvas>
               </div>
             </div>
           </div>
@@ -150,7 +149,7 @@
         <div class="card mb-4">
           <div class="card-header">
             <i class="bi bi-table me-1"></i>
-            Vault Overview
+            Vault Entities
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -160,13 +159,15 @@
                     <th>Vault ID</th>
                     <th>Total Assets</th>
                     <th>Total Shares</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
+                    <th>Deposits</th>
+                    <th>Withdrawals</th>
+                    <th>Users</th>
+                    <th>Last Activity</th>
                   </tr>
                 </thead>
                 <tbody id="vaults-table">
                   <tr>
-                    <td colspan="5" class="text-center">Loading data...</td>
+                    <td colspan="7" class="text-center">Loading data...</td>
                   </tr>
                 </tbody>
               </table>
@@ -174,12 +175,12 @@
           </div>
         </div>
 
-        <!-- Deposits Section -->
-        <h2 id="deposits" class="mt-5 mb-4">Recent Deposits</h2>
+        <!-- Vault Events Section -->
+        <h2 id="vault-events" class="mt-5 mb-4">Vault Activity</h2>
         <div class="card mb-4">
           <div class="card-header">
-            <i class="bi bi-wallet me-1"></i>
-            Deposit Activity
+            <i class="bi bi-activity me-1"></i>
+            Recent Vault Events
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -187,16 +188,17 @@
                 <thead>
                   <tr>
                     <th>Transaction</th>
+                    <th>Vault</th>
+                    <th>Event Type</th>
                     <th>User</th>
-                    <th>Asset</th>
                     <th>Amount</th>
                     <th>Shares</th>
-                    <th>Time</th>
+                    <th>Timestamp</th>
                   </tr>
                 </thead>
-                <tbody id="deposits-table">
+                <tbody id="vault-events-table">
                   <tr>
-                    <td colspan="6" class="text-center">Loading data...</td>
+                    <td colspan="7" class="text-center">Loading data...</td>
                   </tr>
                 </tbody>
               </table>
@@ -204,28 +206,92 @@
           </div>
         </div>
 
-        <!-- Strategies Section -->
-        <h2 id="strategies" class="mt-5 mb-4">Strategy Executions</h2>
+        <!-- Vault Users Section -->
+        <h2 id="vault-users" class="mt-5 mb-4">Vault Users</h2>
         <div class="card mb-4">
           <div class="card-header">
-            <i class="bi bi-graph-up me-1"></i>
-            Strategy Activity
+            <i class="bi bi-people me-1"></i>
+            User Positions
           </div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-striped">
                 <thead>
                   <tr>
-                    <th>Strategy</th>
-                    <th>Executed By</th>
-                    <th>Status</th>
-                    <th>Time</th>
-                    <th>Details</th>
+                    <th>User</th>
+                    <th>Vault</th>
+                    <th>Shares</th>
+                    <th>Deposits</th>
+                    <th>Withdrawals</th>
+                    <th>Last Activity</th>
+                    <th>Unlock Time</th>
                   </tr>
                 </thead>
-                <tbody id="strategies-table">
+                <tbody id="vault-users-table">
                   <tr>
-                    <td colspan="5" class="text-center">Loading data...</td>
+                    <td colspan="7" class="text-center">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loans Section -->
+        <h2 id="loans" class="mt-5 mb-4">Loans</h2>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-cash-coin me-1"></i>
+            Active Loans
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Loan ID</th>
+                    <th>Borrower</th>
+                    <th>Outstanding Debt</th>
+                    <th>Collateral</th>
+                    <th>Health Factor</th>
+                    <th>Interest Rate</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="loans-table">
+                  <tr>
+                    <td colspan="7" class="text-center">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loan Events Section -->
+        <h2 id="loan-events" class="mt-5 mb-4">Loan Activity</h2>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-activity me-1"></i>
+            Recent Loan Events
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Transaction</th>
+                    <th>Loan ID</th>
+                    <th>Event Type</th>
+                    <th>Debt Change</th>
+                    <th>Collateral Change</th>
+                    <th>Health Factor</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="loan-events-table">
+                  <tr>
+                    <td colspan="7" class="text-center">Loading data...</td>
                   </tr>
                 </tbody>
               </table>
@@ -238,65 +304,38 @@
         <div class="card mb-4">
           <div class="card-header">
             <i class="bi bi-shield me-1"></i>
-            Risk Overview
+            System Health
           </div>
           <div class="card-body">
             <div class="row">
+              <div class="col-md-6">
+                <div class="mb-4">
+                  <h5>Risk Score</h5>
+                  <div class="progress">
+                    <div id="risk-score-bar" class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Low</div>
+                  </div>
+                  <p class="mt-2" id="risk-score-text">Current risk score: <span id="risk-score">Low</span></p>
+                </div>
+                <div>
+                  <h5>Health Metrics</h5>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Average Health Factor
+                      <span class="badge bg-primary rounded-pill" id="avg-health-factor">-</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Loans Near Liquidation
+                      <span class="badge bg-warning rounded-pill" id="loans-near-liquidation">0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Total Collateral Value
+                      <span class="badge bg-success rounded-pill" id="total-collateral">-</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
               <div class="col-md-6">
                 <canvas id="riskChart" width="100%" height="50"></canvas>
-              </div>
-              <div class="col-md-6">
-                <div class="table-responsive">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody id="risk-metrics-table">
-                      <tr>
-                        <td colspan="3" class="text-center">Loading data...</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Asset Prices Section -->
-        <h2 id="prices" class="mt-5 mb-4">Asset Prices</h2>
-        <div class="card mb-4">
-          <div class="card-header">
-            <i class="bi bi-currency-exchange me-1"></i>
-            Current Prices
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <canvas id="priceChart" width="100%" height="50"></canvas>
-              </div>
-              <div class="col-md-6">
-                <div class="table-responsive">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Asset</th>
-                        <th>Price</th>
-                        <th>Change (24h)</th>
-                        <th>Source</th>
-                      </tr>
-                    </thead>
-                    <tbody id="prices-table">
-                      <tr>
-                        <td colspan="4" class="text-center">Loading data...</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
               </div>
             </div>
           </div>
