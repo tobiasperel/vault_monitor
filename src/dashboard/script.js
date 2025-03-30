@@ -213,7 +213,7 @@ async function loadDashboardData() {
         loadLoans(),
         loadLoanEvents(),
         loadL1Data(),
-        // loadHlpTransactions()
+        loadHlpTransactions()
       ]);
       
       // Create charts
@@ -602,7 +602,7 @@ async function loadL1Data() {
 async function loadHlpTransactions() {
   const query = `
     query {
-      hlpTransactionEntitys(orderBy: "timestamp", limit: 10) {
+      hlpVaultEvents(orderBy: "timestamp") {
         items {
           id
           transactionHash
@@ -617,7 +617,7 @@ async function loadHlpTransactions() {
   const data = await fetchData(query);
   if (!data || !isBrowser) return;
 
-  const events = data.hlpTransactionEntitys?.items || [];
+  const events = data.hlpVaultEvents?.items || [];
   const eventsTable = document.getElementById('hlp-events-table');
 
   if (!eventsTable) return;
@@ -634,10 +634,28 @@ async function loadHlpTransactions() {
     row.innerHTML = `
       <td>${formatAddress(event.transactionHash)}</td>
       <td>${event.eventType}</td>
-      <td>${formatEth(event.amount)}</td>
+      <td>${Number(event.amount) / 1e6}</td>
       <td>${formatTimestamp(event.timestamp)}</td>
     `;
     eventsTable.appendChild(row);
+  });
+
+  const hlpActivity = document.getElementById('hlp-activity-table');
+  if (!hlpActivity || !isBrowser) return;
+
+  hlpActivity.innerHTML = '';
+
+  events.forEach(event => {
+    if (event.eventType === 'l1-deposit' || event.eventType === 'l1-withdraw') {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${event.eventType}</td>
+        <td>${event.eventType === 'l1-deposit' ? Number(event.amount) / 1e6 : ''}</td>
+        <td>${event.eventType === 'l1-withdraw' ? Number(event.amount) / 1e6 : ''}</td>
+        <td>${formatTimestamp(event.timestamp)}</td>
+      `;
+      hlpActivity.appendChild(row);
+    }
   });
 }
 

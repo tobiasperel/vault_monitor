@@ -34,8 +34,7 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
     const { user, vault, isDeposit, usd } = event.args;
     const { db } = context; // Get db from context
 
-    const eventType = isDeposit ? 'l1-vault-deposit' : 'l1-vault-withdraw';
-    const timestamp = Number(event.block.timestamp); // Convert BigInt timestamp to Number for schema
+    const eventType = isDeposit ? 'vault-deposit' : 'vault-withdraw';
 
     // --- Supabase Logging (Optional - kept as is) ---
     await supabase.from('hlp_vault_event').insert({
@@ -45,7 +44,7 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: vault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: new Date(timestamp * 1000), // Use converted timestamp
+      timestamp: new Date(Number(event.block.timestamp) * 1000),
       transactionHash: event.transaction.hash,
     });
     // --- End Supabase Logging ---
@@ -57,8 +56,8 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
       amount: usd, // Store as BigInt (matches schema)
       user: user, // Store original address
       vault: vault, // Store original address
-      blockNumber: event.block.number.toString(), // Store as String (matches schema)
-      timestamp: new Date(timestamp * 1000), // Fix: Pass Date object
+      blockNumber: event.block.number, // Pass BigInt directly
+      timestamp: event.block.timestamp, // Pass BigInt directly
       transactionHash: event.transaction.hash,
     });
     // --- End Ponder DB Insert ---
@@ -113,11 +112,10 @@ ponder.on("HLP:SpotSend", async (params: any) => {
 
     const { user, destination, token, wei } = event.args; // Keep original arg name `wei`
     const { db } = context; // Get db from context
-    const timestamp = Number(event.block.timestamp); // Convert BigInt timestamp to Number for schema
 
     // --- Keep the logic to only process transfers TO the specific Boring Vault address ---
     if (destination.toLowerCase() === process.env.BORING_VAULT_ADDRESS?.toLowerCase()) {
-      const eventType = 'l1-spot-send-to-vault'; // More specific event type
+      const eventType = 'l1-withdrawal'; // More specific event type
 
       // --- Supabase Logging (Optional - kept as is) ---
       await supabase.from('hlp_vault_event').insert({
@@ -127,7 +125,7 @@ ponder.on("HLP:SpotSend", async (params: any) => {
         user: user.toLowerCase(),
         vault: destination.toLowerCase(),
         blockNumber: event.block.number.toString(),
-        timestamp: new Date(timestamp * 1000),
+        timestamp: new Date(Number(event.block.timestamp) * 1000),
         transactionHash: event.transaction.hash,
       });
       // --- End Supabase Logging ---
@@ -139,8 +137,8 @@ ponder.on("HLP:SpotSend", async (params: any) => {
         amount: wei, // Store as BigInt (matches schema), use original arg `wei`
         user: user,
         vault: destination,
-        blockNumber: event.block.number.toString(), // Store as String (matches schema)
-        timestamp: new Date(timestamp * 1000), // Fix: Pass Date object
+        blockNumber: event.block.number, // Pass BigInt directly
+        timestamp: event.block.timestamp, // Pass BigInt directly
         transactionHash: event.transaction.hash,
       });
       // --- End Ponder DB Insert ---
@@ -163,8 +161,7 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
     const { user, ntl, toPerp } = event.args;
     const { db } = context; // Get db from context
 
-    const eventType = toPerp ? 'l1-usd-transfer-to-perp' : 'l1-usd-transfer-from-perp';
-    const timestamp = Number(event.block.timestamp); // Convert BigInt timestamp to Number for schema
+    const eventType = toPerp ? 'perp-transfer' : 'spot-transfer';
     const targetVault = process.env.HLP_VAULT_ADDRESS || '0xUnknownHLPVault'; // Use env var or placeholder
 
     // --- Supabase Logging (Optional - kept as is) ---
@@ -175,7 +172,7 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: targetVault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: new Date(Number(event.block.timestamp) * 1000),
       transactionHash: event.transaction.hash,  
     });
     // --- End Supabase Logging ---
@@ -187,8 +184,8 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
       amount: ntl, // Store as BigInt (matches schema)
       user: user,
       vault: targetVault,
-      blockNumber: event.block.number.toString(), // Store as String (matches schema)
-      timestamp: new Date(timestamp * 1000), // Fix: Pass Date object
+      blockNumber: event.block.number, // Pass BigInt directly
+      timestamp: event.block.timestamp, // Pass BigInt directly
       transactionHash: event.transaction.hash,
     });
     // --- End Ponder DB Insert ---
@@ -211,13 +208,12 @@ ponder.on("USDC:Transfer", async (params: any) => {
 
     const { from, to, value } = event.args;
     const { db } = context; // Get db from context
-    const timestampInSeconds = Number(event.block.timestamp); // Keep as number for calculation
 
     // --- Only process transfers FROM the Boring Vault address ---
     // Note: This logic assumes deposits TO the L1 bridge involve a transfer FROM the Boring Vault
     // Adjust this condition if the deposit mechanism is different.
     if (from.toLowerCase() === process.env.BORING_VAULT_ADDRESS?.toLowerCase()) {
-        const eventType = 'l1-usdc-deposit'; // Or a more specific name if known
+        const eventType = 'l1-deposit'; // Or a more specific name if known
 
         // --- Supabase Logging (Optional - kept structure) ---
         await supabase.from('hlp_vault_event').insert({
@@ -227,8 +223,8 @@ ponder.on("USDC:Transfer", async (params: any) => {
             user: from.toLowerCase(), // User is the sender (the vault)
             vault: to.toLowerCase(), // Vault here might represent the destination (L1 Bridge?)
             blockNumber: event.block.number.toString(),
-            timestamp: new Date(timestampInSeconds * 1000), // Correct for Supabase
-            transactionHash: event.transactionHash,
+            timestamp: new Date(Number(event.block.timestamp) * 1000),
+            transactionHash: event.transaction.hash,
         });
         // --- End Supabase Logging ---
 
@@ -236,12 +232,12 @@ ponder.on("USDC:Transfer", async (params: any) => {
         await db.insert(hlpVaultEvent).values({
             id: `${event.transaction.hash}-${event.log.logIndex}-${eventType}`,
             eventType: eventType,
-            amount: value, // Store as BigInt (matches schema)
+            amount: value, 
             user: from, // Store original sender address
             vault: to, // Store original destination address
-            blockNumber: event.block.number.toString(), // Store as String (matches schema)
-            timestamp: new Date(timestampInSeconds * 1000), // Fix: Pass Date object
-            transactionHash: event.transactionHash,
+            blockNumber: event.block.number, // Pass BigInt directly
+            timestamp: event.block.timestamp, // Pass BigInt directly
+            transactionHash: event.transaction.hash,
         });
         // --- End Ponder DB Insert ---
 

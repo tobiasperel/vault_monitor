@@ -289,7 +289,7 @@ export const hlpVaultEvent = onchainTable("hlp_vault_event", (t) => ({
   amount: t.bigint(),
   user: t.text(),
   vault: t.text(),
-  blockNumber: t.text(),
-  timestamp: t.timestamp(),
+  blockNumber: t.bigint(),
+  timestamp: t.bigint(),
   transactionHash: t.text(),
 }));
