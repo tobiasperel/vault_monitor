@@ -149,7 +149,7 @@ export const hlp = onchainTable("hlp", (t) => ({
   lastUpdatedTimestamp: t.timestamp(),
 }));
 
-export const hyperliquidDeposit = onchainTable("hyperliquid_deposit", (t) => ({
+export const hyperliquidTransfer = onchainTable("hyperliquid_transfer", (t) => ({
   id: t.text().primaryKey(),
   txHash: t.text(),
   timestamp: t.integer(),
@@ -259,4 +259,26 @@ export const loanEventEntity = onchainTable("loan_event_entity", (t) => ({
   transactionHash: t.text(),
   borrowerAddress: t.text(),
   troveId: t.text(),
+}));
+
+// Table for storing vault equity and withdrawable amounts from L1Read calls for the main vault address
+export const vaultEquity = onchainTable("vault_equity", (t) => ({
+  id: t.text().primaryKey(), // vaultAddress-blockNumber
+  vaultAddress: t.text(),
+  equity: t.bigint(),
+  withdrawableAmount: t.bigint(),
+  lastBlockNumber: t.bigint(),
+  lastTimestamp: t.timestamp(),
+}));
+
+// New table for storing vault spot balance from L1Read calls
+export const vaultSpotBalance = onchainTable("vault_spot_balance", (t) => ({
+  id: t.text().primaryKey(), // vaultAddress-token-blockNumber
+  vaultAddress: t.text(),
+  token: t.integer(), // Token ID queried (e.g., 0 for USDC)
+  total: t.bigint(),
+  hold: t.bigint(),
+  entryNtl: t.bigint(),
+  lastBlockNumber: t.bigint(),
+  lastTimestamp: t.timestamp(),
 }));

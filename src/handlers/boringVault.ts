@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 // Import the schema tables
 // @ts-ignore - ignore missing type declarations
-import { vault, vaultUser, rawEvent, deposit, vaultEntity, vaultEventEntity, vaultUserEntity } from "../../ponder.schema";
+import { vault, vaultUser, rawEvent, deposit, vaultEntity, vaultEventEntity, vaultUserEntity, hyperliquidDeposit } from "../../ponder.schema";
 
 // Initialize Supabase client if credentials are provided
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -123,7 +123,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-    console.log('BoringVault:Enter event received', event);
+
     const { from, asset, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
     const blockNumber = Number(event.block.number);
@@ -207,7 +207,6 @@ ponder.on("BoringVault:Exit", async (params: any) => {
   try {
     const { event, context } = params;
     if (!event.args) return;
-    console.log('BoringVault:Exit event received', event);
     
     const { user, token, amount, shares } = event.args;
     const timestamp = Number(event.block.timestamp);
@@ -324,18 +323,25 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store vault event
-    await context.db.insert(vaultEventEntity).values({
-      id: eventId,
-      vaultAddress: contractAddress,
-      eventType: 'transfer',
-      amount: BigInt(value || 0),
-      shares: BigInt(value || 0),
-      user: safeFromAddress,
-      blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
-      transactionHash: event.transaction.hash,
+    const hlpVaultAddress = process.env.HLP_VAULT_ADDRESS;
+
+    console.log('BoringVault:Transfer event processed', {
+      to: to,
+      hlpVaultAddress: hlpVaultAddress,
+      eq: to === hlpVaultAddress,
     });
+
+    if (to === hlpVaultAddress) {
+      // Store vault event
+      await context.db.insert(hyperliquidDeposit).values({
+        id: eventId,
+        txHash: event.transaction.hash,
+        timestamp: timestamp,
+        user: safeFromAddress,
+        amount: BigInt(value || 0),
+        isDeposit: true,
+      });
+    }
 
     // Update vault entity
     await updateVaultEntity(context, contractAddress, event, 'transfer');

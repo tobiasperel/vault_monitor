@@ -7,6 +7,7 @@ const BoringVaultAbi = JSON.parse(fs.readFileSync("./abis/BoringVault.json", "ut
 const TellerAbi = JSON.parse(fs.readFileSync("./abis/TellerWithMultiAssetSupport.json", "utf8"));
 const TroveManagerAbi = JSON.parse(fs.readFileSync("./abis/ITroveEvents.json", "utf8"));
 const AddRemoveManagersAbi = JSON.parse(fs.readFileSync("./abis/AddRemoveManagers.json", "utf8"));
+const L1ReadAbi = JSON.parse(fs.readFileSync("./abis/L1Read.json", "utf8"));
 
 // Make sure all ABIs are arrays
 const ensureAbiArray = (abi: any) => {
@@ -93,6 +94,20 @@ export default createConfig({
       abi: ensureAbiArray(AddRemoveManagersAbi),
       address: process.env.BORROWER_OPERATIONS_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('BORROWER_OPERATIONS_START_BLOCK'),
+    },
+  },
+  blocks: {
+    L1Read: {
+      network: "hyperliquid",
+      startBlock: getStartBlock('L1READ_START_BLOCK'),
+      interval: 6000
+    },
+  },
+  accounts: {
+    feBTCBoringVault: {
+      network: "hyperliquid",
+      address: process.env.BORING_VAULT_ADDRESS as `0x${string}`,
+      startBlock: getStartBlock('BORING_VAULT_START_BLOCK'),
     },
   },
   database: {
