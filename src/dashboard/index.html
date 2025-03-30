@@ -60,97 +60,154 @@
       <!-- Main content -->
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1 class="h2">feBTC Vault Monitor Dashboard</h1>
+          <h1 class="h1">feBTC Vault Monitor Dashboard</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
-            <span class="text-muted" id="last-updated">Last updated: Never</span>
+            <span class="date-time" id="last-updated">Last updated: Never</span>
           </div>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="row mb-4">
-          <div class="col-xl-3 col-md-6">
-            <div class="card bg-dark text-white mb-4">
+        <!-- New Top Row: Risk Metrics (Left) + Summary Cards (Right) -->
+        <div class="row align-items-stretch mt-4">
+          <!-- Left Column: Risk Metrics -->
+          <div class="col-lg-3 mb-4">
+            <div class="card h-100">
               <div class="card-body">
-                <h5>Total Assets</h5>
-                <h2 id="total-assets">-</h2>
-              </div>
-              <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                <i class="bi bi-arrow-right text-white"></i>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6">
-            <div class="card bg-success text-white mb-4">
-              <div class="card-body">
-                <h5>Total Shares</h5>
-                <h2 id="total-shares">-</h2>
-              </div>
-              <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                <i class="bi bi-arrow-right text-white"></i>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6">
-            <div class="card bg-warning text-white mb-4">
-              <div class="card-body">
-                <h5>Active Users</h5>
-                <h2 id="active-users">-</h2>
-              </div>
-              <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#vault-users">View Details</a>
-                <i class="bi bi-arrow-right text-white"></i>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-md-6">
-            <div class="card bg-danger text-white mb-4">
-              <div class="card-body">
-                <h5>Outstanding Debt</h5>
-                <h2 id="outstanding-debt">-</h2>
-              </div>
-              <div class="card-footer d-flex align-items-center justify-content-between">
-                <a class="small text-white stretched-link" href="#loans">View Details</a>
-                <i class="bi bi-arrow-right text-white"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Risk Metrics Section -->
-        <h2 id="risk" class="mt-5 mb-4">Risk Metrics</h2>
-        <div class="card mb-4" style="align-items: center;">
-          <div class="card-header">
-            <i class="bi bi-shield me-1"></i>
-            System Health
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-12" style="padding-bottom: 40px;">
                 <div class="mb-4">
                   <h5>Risk Score</h5>
-                  <div class="progress">
-                    <div id="risk-score-bar" class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Low</div>
+                  <div class="progress mb-2" style="height: 20px;">
+                    <div id="risk-score-bar" class="progress-bar bg-success fs-6" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Low</div>
                   </div>
-                  <p class="mt-2" id="risk-score-text">Current risk score: <span id="risk-score">Low</span></p>
+                  <p class="mb-0" id="risk-score-text">Current risk score: <span id="risk-score">Low</span></p>
                 </div>
                 <div>
                   <h5>Health Metrics</h5>
-                  <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                       Average Health Factor
-                      <span class="badge bg-primary rounded-pill" id="avg-health-factor">-</span>
+                      <span class="badge bg-primary rounded-pill fs-6" id="avg-health-factor">-</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                       Loans Near Liquidation
-                      <span class="badge bg-warning rounded-pill" id="loans-near-liquidation">0</span>
+                      <span class="badge bg-warning rounded-pill fs-6" id="loans-near-liquidation">0</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                       Total Collateral Value
-                      <span class="badge bg-success rounded-pill" id="total-collateral">-</span>
+                      <span class="badge bg-success rounded-pill fs-6" id="total-collateral">-</span>
                     </li>
                   </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Summary Cards -->
+          <div class="col-lg-9">
+            <!-- Summary Cards Row 1 -->
+            <div class="row">
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>HLP Equity (USDC)</h5>
+                    <h2 id="hlp-equity">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>HLP Spot Balance (USDC)</h5>
+                    <h2 id="hlp-spot-balance">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Total Assets (BTC)</h5>
+                    <h2 id="total-assets">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Summary Cards Row 2 -->
+            <div class="row">
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Total Shares (feBTC)</h5>
+                    <h2 id="total-shares">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Active Users</h5>
+                    <h2 id="active-users">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#vault-users">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-danger text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Outstanding Debt (feUSD)</h5>
+                    <h2 id="outstanding-debt">-</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#loans">View Details</a>
+                    <i class="bi bi-arrow-right text-white"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End New Top Row -->
+
+
+        <!-- Charts Section (Previously part of Risk Metrics) -->
+        <h2 id="charts" class="mt-5 mb-4">Overview Charts</h2>
+        <div class="row">
+              <div class="col-xl-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="bi bi-bar-chart-fill me-1"></i>
+                    HLP Equity
+                  </div>
+                  <div class="card-body">
+                    <canvas id="vaultEquityChart" width="100%" height="40"></canvas>
+                  </div>
+                </div>
+              </div>
+               <div class="col-xl-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="bi bi-bar-chart-fill me-1"></i>
+                    HLP Spot
+                  </div>
+                  <div class="card-body">
+                    <canvas id="vaultSpotBalanceChart" width="100%" height="40"></canvas>
+                  </div>
                 </div>
               </div>
               <div class="col-xl-6">
@@ -175,12 +232,13 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
+              <!-- Note: riskChart canvas was here, removed for now as it's redundant/unclear -->
+              <!-- <div class="col-md-6">
                 <canvas id="riskChart" width="100%" height="50"></canvas>
-              </div>
-            </div>
-          </div>
+              </div> -->
         </div>
+        <!-- End Charts Section -->
+
 
         <!-- Vaults Section -->
         <h2 id="vaults" class="mt-5 mb-4">Vaults</h2>

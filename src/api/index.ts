@@ -254,4 +254,42 @@ app.get("/api/asset-prices", async (c) => {
   }
 });
 
+app.get("/api/historical-l1-data", async (c) => {
+  try {
+    const query = `
+      query GetHistoricalL1Data {
+        vaultEquitys(
+          orderBy: { lastTimestamp: DESC }
+          limit: 10
+        ) {
+          id
+          lastTimestamp
+          total
+          hold
+        }
+        vaultSpotBalances(
+          orderBy: { lastTimestamp: DESC }
+          limit: 10
+        ) {
+          id
+          lastTimestamp
+          total
+        }
+      }
+    `;
+
+    const result = await fetch(`http://localhost:3002/graphql`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    }).then(r => r.json()) as { data?: { vaultEquitys?: any[] } };
+
+    return c.json(result.data?.vaultEquitys || []);
+  } catch (error) {
+    console.error("Error fetching historical L1 data:", error);
+    return c.json([]);
+  }
+});
+
+
 export default app; 

@@ -2,6 +2,8 @@
 
 // Check if we're in a browser environment
 const isBrowser = typeof document !== 'undefined';
+let historicalVaultEvents = [];
+let historicalLoanEvents = [];
 
 // Utility functions
 function formatNumber(num, decimals = 2) {
@@ -209,7 +211,8 @@ async function loadDashboardData() {
         loadVaultEvents(),
         loadVaultUsers(),
         loadLoans(),
-        loadLoanEvents()
+        loadLoanEvents(),
+        loadL1Data()
       ]);
       
       // Create charts
@@ -310,6 +313,7 @@ async function loadVaultEvents() {
   if (!data || !isBrowser) return;
   
   const events = data.vaultEventEntitys?.items || [];
+  historicalVaultEvents = events;
   const eventsTable = document.getElementById('vault-events-table');
   
   if (!eventsTable) return;
@@ -409,6 +413,7 @@ async function loadLoans() {
   if (!data || !isBrowser) return;
   
   const loans = data.loanEntitys?.items || [];
+  historicalLoanEvents = loans;
   const loansTable = document.getElementById('loans-table');
   
   if (!loansTable) return;
@@ -497,6 +502,102 @@ async function loadLoanEvents() {
   });
 }
 
+async function loadL1Data() {
+  const query = `
+    query {
+      vaultEquitys(orderBy: "lastTimestamp", limit: 10) {
+        items {
+          id
+          lastTimestamp
+          equity
+          withdrawableAmount
+        }
+      }
+      vaultSpotBalances(orderBy: "lastTimestamp", limit: 10) {
+        items {
+          id
+          lastTimestamp
+          total
+          hold
+        }
+      }
+    }
+  `;
+
+  const data = await fetchData(query);
+  if (!data || !isBrowser) return;
+
+  const vaultEquitys = data.vaultEquitys?.items || [];
+  const vaultSpotBalances = data.vaultSpotBalances?.items || [];
+
+  if (vaultEquitys.length > 0) {
+    const totalEquity = vaultEquitys.reduce((sum, item) => sum + Number(item.equity || 0), 0);
+    document.getElementById('hlp-equity').textContent = Number(totalEquity / 1e6).toFixed(2);
+  }
+
+  if (vaultSpotBalances.length > 0) {
+    const totalSpotBalance = vaultSpotBalances.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    document.getElementById('hlp-spot-balance').textContent = Number(totalSpotBalance / 1e8).toFixed(2);
+  }
+
+  const ctx = document.getElementById('vaultEquityChart');
+  if (!ctx) return;
+
+  const ctxContext = ctx.getContext('2d');
+
+  new Chart(ctxContext, {
+    type: 'line',
+    data: {
+      labels: vaultEquitys.map(item => new Date(Number(item.lastTimestamp)).getDate()),
+      datasets: [{
+        label: 'Equity',
+        data: vaultEquitys.map(item => Number(item.equity / 1e6)),
+        borderColor: 'rgba(75, 192, 192, 1)',
+        fill: false
+      }, {
+        label: 'Withdrawable Amount',
+        data: vaultEquitys.map(item => Number(item.withdrawableAmount / 1e6)),
+        borderColor: 'rgba(255, 99, 132, 1)',
+        fill: false
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  const ctxSpotBalance = document.getElementById('vaultSpotBalanceChart');
+  if (!ctxSpotBalance) return;
+
+  const ctxSpotBalanceContext = ctxSpotBalance.getContext('2d');
+
+  new Chart(ctxSpotBalanceContext, {
+    type: 'bar',
+    data: {
+      labels: vaultSpotBalances.map(item => new Date(Number(item.lastTimestamp)).getDate()),
+      datasets: [{
+        label: 'Total',
+        data: vaultSpotBalances.map(item => Number(item.total / 1e8)),
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+}
+
 // Chart creation
 function createVaultActivityChart() {
   if (!isBrowser) return;
@@ -510,16 +611,19 @@ function createVaultActivityChart() {
   new Chart(ctxContext, {
     type: 'bar',
     data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      labels: 
+        historicalVaultEvents.map(
+          event => new Date(Number(event.timestamp * 1000)).getDate()
+        ),
       datasets: [{
         label: 'Deposits',
-        data: [12, 19, 3, 5, 2, 3],
+        data: historicalVaultEvents.map(event => (event.eventType === 'deposit') ? Number(event.amount) / 1e18 : 0),
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1
       }, {
         label: 'Withdrawals',
-        data: [5, 10, 6, 2, 4, 7],
+        data: historicalVaultEvents.map(event => (event.eventType === 'withdraw') ? Number(event.amount) / 1e18 : 0),
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1
@@ -542,15 +646,18 @@ function createLoanHealthChart() {
   if (!ctx) return;
   
   const ctxContext = ctx.getContext('2d');
-  
-  // Sample data - will be replaced with real data
+
+  const labels = historicalLoanEvents.map(event => new Date(Number(event.lastEventTimestamp * 1000)).getDate());
+  const data = historicalLoanEvents.map(event => Number(event.healthFactor) );
+  labels.push(new Date().getDate());
+  data.push(Number(historicalLoanEvents[historicalLoanEvents.length - 1].healthFactor));
   new Chart(ctxContext, {
     type: 'line',
     data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      labels: labels,
       datasets: [{
         label: 'Average Health Factor',
-        data: [2.5, 2.3, 2.1, 1.9, 2.0, 2.2],
+        data: data,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1,
