@@ -282,3 +282,14 @@ export const vaultSpotBalance = onchainTable("vault_spot_balance", (t) => ({
   lastBlockNumber: t.bigint(),
   lastTimestamp: t.timestamp(),
 }));
+
+export const hlpVaultEvent = onchainTable("hlp_vault_event", (t) => ({
+  id: t.text().primaryKey(), // tx_hash-log_index
+  eventType: t.text(), // 'deposit', 'withdraw', 'transfer'
+  amount: t.bigint(),
+  user: t.text(),
+  vault: t.text(),
+  blockNumber: t.text(),
+  timestamp: t.timestamp(),
+  transactionHash: t.text(),
+}));

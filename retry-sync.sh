@@ -27,6 +27,7 @@ L1WRITE_ADDRESS="0x3333333333333333333333333333333333333333"
 BORROWER_OPERATIONS_ADDRESS="0x7B4ed0DB4231D7763Ee257FFC1dA2770445bD8aC"
 TROVE_MANAGER="0xA0691EF05cac8545574cd62F769FE8787538b0E5"
 HLP_VAULT_ADDRESS="0xa15099a30BBf2e68942d6F4c43d70D04FAEab0A0"
+USDC_ADDRESS="0xd9CBEC81df392A88AEff575E962d149d57F4d6bc"
 
 # Starting blocks for indexing
 BORING_VAULT_START_BLOCK=$START_BLOCK
@@ -71,7 +72,8 @@ const BoringVaultAbi = JSON.parse(fs.readFileSync("./abis/BoringVault.json", "ut
 const TellerAbi = JSON.parse(fs.readFileSync("./abis/TellerWithMultiAssetSupport.json", "utf8"));
 const TroveManagerAbi = JSON.parse(fs.readFileSync("./abis/ITroveEvents.json", "utf8"));
 const AddRemoveManagersAbi = JSON.parse(fs.readFileSync("./abis/AddRemoveManagers.json", "utf8"));
-const L1ReadAbi = JSON.parse(fs.readFileSync("./abis/L1Read.json", "utf8"));
+const L1WriteAbi = JSON.parse(fs.readFileSync("./abis/L1Write.json", "utf8"));
+const ERC20Abi = JSON.parse(fs.readFileSync("./abis/ERC20.json", "utf8"));
 
 // Make sure all ABIs are arrays
 const ensureAbiArray = (abi: any) => {
@@ -158,6 +160,44 @@ export default createConfig({
       abi: ensureAbiArray(AddRemoveManagersAbi),
       address: process.env.BORROWER_OPERATIONS_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('BORROWER_OPERATIONS_START_BLOCK'),
+    },
+    HLP: {
+      network: "hyperliquid",
+      abi: ensureAbiArray(L1WriteAbi),
+      address: process.env.L1WRITE_ADDRESS as \`0x\${string}\`,
+      startBlock: getStartBlock('L1WRITE_START_BLOCK'),
+      filter: [{
+        event: 'VaultTransfer',
+        args: {
+          user: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+          vault: process.env.HLP_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      },
+      {
+        event: 'UsdClassTransfer',
+        args: {
+          user: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      },
+      {
+        event: 'SpotSend',
+        args: {
+          user: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      },
+    ]},
+    USDC: {
+      network: "hyperliquid",
+      abi: ensureAbiArray(ERC20Abi),
+      address: process.env.USDC_ADDRESS as \`0x\${string}\`,
+      startBlock: getStartBlock('L1READ_START_BLOCK'),
+      filter: [{
+        event: 'Transfer',
+        args: {
+          from: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+          to: process.env.HLP_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      }],
     },
   },
   blocks: {

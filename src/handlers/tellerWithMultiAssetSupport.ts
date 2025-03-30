@@ -29,31 +29,6 @@ async function safeSupabaseInsert(table: string, data: any) {
   }
 }
 
-// Define event context types
-interface PonderContext {
-  db: any;
-  contracts: {
-    Teller: {
-      instance: any;
-    }
-  };
-}
-
-interface PonderEvent {
-  args: any;
-  block: {
-    timestamp: string | number;
-    number: string | number;
-  };
-  transaction: {
-    hash: string;
-  };
-  log: {
-    logIndex: string | number;
-  };
-  address: string;
-}
-
 // Helper function to safely serialize BigInt values
 function serializeEvent(event: any): string {
   const serialized = JSON.stringify(event, (key, value) => {

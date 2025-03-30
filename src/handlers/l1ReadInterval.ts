@@ -160,29 +160,3 @@ ponder.on("L1Read:block", async (args: any) => {
   }
   console.log(`Finished L1Read interval handler for block ${blockNumber}`);
 }); 
-
-// ponder.on("feBTCBoringVault:transaction:to", async ({ event, context }) => {
-//   if (event.transaction.to === process.env.HLP_VAULT_ADDRESS) {
-//     await context.db.insert(hyperliquidTransfer).values({
-//       id: event.transaction.hash,
-//       txHash: event.transaction.hash,
-//       timestamp: Number(event.block.timestamp),
-//       user: event.transaction.to,
-//       amount: event.transaction.value,
-//       isDeposit: true,
-//     });
-//   }
-// });
-
-// ponder.on("feBTCBoringVault:transaction:from", async ({ event, context }) => {
-//   if (event.transaction.from === process.env.HLP_VAULT_ADDRESS) {
-//     await context.db.insert(hyperliquidTransfer).values({
-//       id: event.transaction.hash,
-//       txHash: event.transaction.hash,
-//       timestamp: Number(event.block.timestamp),
-//       user: event.transaction.from,
-//       amount: event.transaction.value,
-//       isDeposit: false,
-//     });
-//   }
-// });
