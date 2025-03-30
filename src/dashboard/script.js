@@ -212,7 +212,8 @@ async function loadDashboardData() {
         loadVaultUsers(),
         loadLoans(),
         loadLoanEvents(),
-        loadL1Data()
+        loadL1Data(),
+        // loadHlpTransactions()
       ]);
       
       // Create charts
@@ -266,7 +267,7 @@ async function loadVaults() {
     row.innerHTML = `
       <td>${formatAddress(vault.id)}</td>
       <td>${formatEth(vault.totalAssets)}</td>
-      <td>${Number(vault.totalShares / 1e26).toFixed(0)}</td>
+      <td>${Number(vault.totalShares / 1e27).toFixed(0)}</td>
       <td>${vault.depositCount}</td>
       <td>${vault.withdrawCount}</td>
       <td>${vault.userCount}</td>
@@ -278,7 +279,7 @@ async function loadVaults() {
   // Update summary cards
   if (vaults.length > 0) {
     document.getElementById('total-assets').textContent = formatEth(vaults[0].totalAssets);
-    document.getElementById('total-shares').textContent = Number(vaults[0].totalShares / 1e26).toFixed(0);
+    document.getElementById('total-shares').textContent = Number(vaults[0].totalShares / 1e27).toFixed(0);
     document.getElementById('active-users').textContent = vaults[0].userCount;
     // Update risk score or other metrics if available
     document.getElementById('risk-score').textContent = "Low";  // Placeholder
@@ -532,12 +533,12 @@ async function loadL1Data() {
 
   if (vaultEquitys.length > 0) {
     const totalEquity = vaultEquitys.reduce((sum, item) => sum + Number(item.equity || 0), 0);
-    document.getElementById('hlp-equity').textContent = Number(totalEquity / 1e6).toFixed(2);
+    document.getElementById('hlp-equity').textContent = Number(totalEquity / 1e7).toFixed(2);
   }
 
   if (vaultSpotBalances.length > 0) {
     const totalSpotBalance = vaultSpotBalances.reduce((sum, item) => sum + Number(item.total || 0), 0);
-    document.getElementById('hlp-spot-balance').textContent = Number(totalSpotBalance / 1e8).toFixed(2);
+    document.getElementById('hlp-spot-balance').textContent = Number(totalSpotBalance / 1e9).toFixed(2);
   }
 
   const ctx = document.getElementById('vaultEquityChart');
@@ -596,6 +597,48 @@ async function loadL1Data() {
     }
   });
 
+}
+
+async function loadHlpTransactions() {
+  const query = `
+    query {
+      hlpTransactionEntitys(orderBy: "timestamp", limit: 10) {
+        items {
+          id
+          transactionHash
+          eventType
+          amount
+          timestamp
+        }
+      }
+    }
+  `;
+
+  const data = await fetchData(query);
+  if (!data || !isBrowser) return;
+
+  const events = data.hlpTransactionEntitys?.items || [];
+  const eventsTable = document.getElementById('hlp-events-table');
+
+  if (!eventsTable) return;
+
+  if (events.length === 0) {
+    eventsTable.innerHTML = '<tr><td colspan="7" class="text-center">No events found</td></tr>';
+    return;
+  }
+
+  eventsTable.innerHTML = '';
+
+  events.forEach(event => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${formatAddress(event.transactionHash)}</td>
+      <td>${event.eventType}</td>
+      <td>${formatEth(event.amount)}</td>
+      <td>${formatTimestamp(event.timestamp)}</td>
+    `;
+    eventsTable.appendChild(row);
+  });
 }
 
 // Chart creation
@@ -674,35 +717,174 @@ function createLoanHealthChart() {
   });
 }
 
-// Initialize dashboard
+// Theme Switching Logic
+let themeToggle = null; 
+let themeLabel = null;
+
+if (isBrowser) { 
+  themeToggle = document.getElementById('theme-toggle');
+  themeLabel = document.querySelector('.theme-label');
+
+  if (themeToggle) {
+    themeToggle.addEventListener('change', toggleTheme);
+  }
+}
+
+// Function to apply the theme
+function applyTheme(theme) {
+  if (!isBrowser) return;
+  if (theme === 'dark') {
+    document.body.setAttribute('data-theme', 'dark');
+    if (themeToggle) themeToggle.checked = true;
+    if (themeLabel) themeLabel.textContent = 'Light Mode';
+  } else {
+    document.body.removeAttribute('data-theme');
+    if (themeToggle) themeToggle.checked = false;
+    if (themeLabel) themeLabel.textContent = 'Dark Mode';
+  }
+}
+
+// Function to toggle theme and save preference
+function toggleTheme() {
+  if (!isBrowser) return;
+  const currentTheme = document.body.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', newTheme);
+  applyTheme(newTheme);
+}
+
+// Load saved theme on initial page load
+function loadTheme() {
+  if (!isBrowser) return;
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
+}
+
+// Sidebar Navigation Interaction
+function setupSidebarNavigation() {
+  if (!isBrowser) return;
+
+  const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+  const sections = document.querySelectorAll('main h2[id]'); // Get section headers with IDs
+
+  if (!sidebarLinks.length || !sections.length) {
+    console.warn('Sidebar links or main sections not found for interaction setup.');
+    return;
+  }
+
+  // --- Smooth Scrolling on Click ---
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', function(event) {
+      const href = this.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        event.preventDefault(); // Prevent default jump
+        const targetId = href.substring(1);
+        const targetElement = document.getElementById(targetId);
+
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Optionally update URL hash without jumping (good for back button/history)
+          // history.pushState(null, null, href);
+
+          // Manually update active class immediately on click for snappier feel
+          updateActiveLink(targetId);
+        }
+      }
+    });
+  });
+
+  // --- Active Link Highlighting on Scroll (Intersection Observer) ---
+  const observerOptions = {
+    root: null, // Use the viewport as the root
+    rootMargin: '0px',
+    threshold: 0.4 // Trigger when 40% of the section is visible
+  };
+
+  const observerCallback = (entries) => {
+    let visibleSectionId = null;
+    // Find the section that is most visible or the first one intersecting from the top
+     entries.forEach(entry => {
+        if (entry.isIntersecting) {
+           if (visibleSectionId === null || entry.boundingClientRect.top < document.getElementById(visibleSectionId).getBoundingClientRect().top) {
+               visibleSectionId = entry.target.id;
+           }
+        }
+     });
+
+    // If scrolled to top or no section is sufficiently visible, default to dashboard? Or keep last active?
+    // For now, only update if a section is clearly visible.
+    if (visibleSectionId) {
+         updateActiveLink(visibleSectionId);
+    } else {
+        // Check if scrolled near the top - activate Dashboard link
+        if (window.scrollY < 200) {
+             updateActiveLink('dashboard'); // Assuming top section doesn't have an ID or corresponds to dashboard
+        }
+        // Otherwise, keep the last active link highlighted when scrolling between sections
+    }
+  };
+
+  const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+  sections.forEach(section => {
+    observer.observe(section);
+  });
+
+  // --- Helper function to update active class ---
+  function updateActiveLink(targetId) {
+      sidebarLinks.forEach(link => {
+          link.classList.remove('active');
+          // Check if the link's href matches the target section ID
+          // Handle the default Dashboard link special case (href="#")
+          const linkHref = link.getAttribute('href');
+          if ((linkHref === `#${targetId}`) || (targetId === 'dashboard' && linkHref === '#')) {
+              link.classList.add('active');
+          }
+      });
+  }
+
+  // Set initial state (Dashboard link active)
+  updateActiveLink('dashboard');
+
+}
+
+// Modify initDashboard to call the new setup function
 function initDashboard() {
+  console.log('Initializing dashboard...');
+  if (isBrowser) {
+    loadTheme(); // Load theme preferences first
+    setupSidebarNavigation(); // Setup navigation interactions
+  }
+
   console.log('Loading dashboard data...');
   loadDashboardData();
   
   // Refresh data every 60 seconds
   setInterval(loadDashboardData, 60000);
   
-  // Add refresh button event listener
+  // Add refresh button event listener (if it exists)
   const refreshButton = document.getElementById('refresh-btn');
   if (refreshButton) {
     refreshButton.addEventListener('click', loadDashboardData);
   }
 }
 
-// Start dashboard when DOM is loaded (only in browser environment)
+// Start dashboard when DOM is loaded
 if (isBrowser) {
+  // Make sure initDashboard is called after DOM is ready
   document.addEventListener('DOMContentLoaded', initDashboard);
 } else {
-  // Node.js environment - export functions
-  console.log('Dashboard script loaded in Node.js environment');
-  
-  // For CommonJS environments
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-      loadDashboardData,
-      formatAddress,
-      formatTimestamp,
-      formatEth
-    };
-  }
+    // Node.js environment - export functions
+    console.log('Dashboard script loaded in Node.js environment');
+
+    // For CommonJS environments
+    if (typeof module !== 'undefined' && module.exports) {
+      module.exports = {
+        loadDashboardData,
+        formatAddress,
+        formatTimestamp,
+        formatEth
+      };
+    }
 } 

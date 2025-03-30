@@ -22,8 +22,8 @@
           </div>
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link active" href="#">
-                <i class="bi bi-house-door"></i> Dashboard
+              <a class="nav-link active" href="#dash">
+                <i class="bi bi-house-door"></i> Overview
               </a>
             </li>
             <li class="nav-item">
@@ -52,8 +52,13 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#risk">
-                <i class="bi bi-shield"></i> Risk Metrics
+              <a class="nav-link" href="#hlp">
+                <i class="bi bi-cash-coin"></i> HLP
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#hlp-events">
+                <i class="bi bi-activity"></i> HLP Activity
               </a>
             </li>
           </ul>
@@ -61,7 +66,7 @@
       </nav>
 
       <!-- Main content -->
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="dash">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 class="h1">feBTC Vault Monitor Dashboard</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
@@ -389,6 +394,64 @@
                   </tr>
                 </thead>
                 <tbody id="loan-events-table">
+                  <tr>
+                    <td colspan="7" class="text-center">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- HLP Section -->
+        <h2 id="hlp" class="mt-5 mb-4">HLP</h2>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-cash-coin me-1"></i>
+            HLP Equity
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>HLP</th>
+                    <th>Deposits</th>
+                    <th>Equity</th>
+                    <th>Withdrawals</th>
+                    <th>Withdrawable</th>
+                    <th>APY</th>
+                  </tr>
+                </thead>
+                <tbody id="hlp-table">
+                  <tr>
+                    <td colspan="7" class="text-center">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- HLP Events Section -->
+        <h2 id="hlp-events" class="mt-5 mb-4">HLP Activity</h2>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-activity me-1"></i>
+            Recent HLP Events
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Transaction</th>
+                    <th>Event Type</th>
+                    <th>Amount</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="hlp-events-table">
                   <tr>
                     <td colspan="7" class="text-center">Loading data...</td>
                   </tr>
