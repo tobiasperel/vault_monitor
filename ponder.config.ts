@@ -139,7 +139,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 2000
+      interval: 200
     },
   },
   accounts: {

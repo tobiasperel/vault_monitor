@@ -506,7 +506,8 @@ async function loadLoanEvents() {
 async function loadL1Data() {
   const query = `
     query {
-      vaultEquitys(orderBy: "lastTimestamp", limit: 10) {
+      # Fetch 100 records using original var names
+      vaultEquitys(orderBy: "lastTimestamp", orderDirection: "desc") {
         items {
           id
           lastTimestamp
@@ -514,7 +515,7 @@ async function loadL1Data() {
           withdrawableAmount
         }
       }
-      vaultSpotBalances(orderBy: "lastTimestamp", limit: 10) {
+      vaultSpotBalances(orderBy: "lastTimestamp", orderDirection: "desc") {
         items {
           id
           lastTimestamp
@@ -531,72 +532,179 @@ async function loadL1Data() {
   const vaultEquitys = data.vaultEquitys?.items || [];
   const vaultSpotBalances = data.vaultSpotBalances?.items || [];
 
-  if (vaultEquitys.length > 0) {
-    const totalEquity = vaultEquitys.reduce((sum, item) => sum + Number(item.equity || 0), 0);
-    document.getElementById('hlp-equity').textContent = Number(totalEquity / 1e7).toFixed(2);
-  }
+  document.getElementById('hlp-equity').textContent = Number(vaultEquitys[vaultEquitys.length - 1].equity / 1e6).toFixed(2);
+  document.getElementById('hlp-spot-balance').textContent = Number(vaultSpotBalances[vaultSpotBalances.length - 1].total / 1e8).toFixed(2);
 
-  if (vaultSpotBalances.length > 0) {
-    const totalSpotBalance = vaultSpotBalances.reduce((sum, item) => sum + Number(item.total || 0), 0);
-    document.getElementById('hlp-spot-balance').textContent = Number(totalSpotBalance / 1e9).toFixed(2);
-  }
-
-  const ctx = document.getElementById('vaultEquityChart');
-  if (!ctx) return;
-
-  const ctxContext = ctx.getContext('2d');
-
-  new Chart(ctxContext, {
-    type: 'line',
-    data: {
-      labels: vaultEquitys.map(item => new Date(Number(item.lastTimestamp)).getDate()),
-      datasets: [{
-        label: 'Equity',
-        data: vaultEquitys.map(item => Number(item.equity / 1e6)),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        fill: false
-      }, {
-        label: 'Withdrawable Amount',
-        data: vaultEquitys.map(item => Number(item.withdrawableAmount / 1e6)),
-        borderColor: 'rgba(255, 99, 132, 1)',
-        fill: false
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
+  let uniqueEquityHistoryForChart = [];
+  if (vaultEquitys.length > 0) { // Use vaultEquitys
+    uniqueEquityHistoryForChart.push(vaultEquitys[0]); // Always include the latest
+    for (let i = 1; i < vaultEquitys.length; i++) { // Use vaultEquitys
+      if (Number(vaultEquitys[i].equity) !== Number(vaultEquitys[i - 1].equity)) {
+        uniqueEquityHistoryForChart.push(vaultEquitys[i]); // Use vaultEquitys
       }
     }
-  });
+  }
 
-  const ctxSpotBalance = document.getElementById('vaultSpotBalanceChart');
-  if (!ctxSpotBalance) return;
-
-  const ctxSpotBalanceContext = ctxSpotBalance.getContext('2d');
-
-  new Chart(ctxSpotBalanceContext, {
-    type: 'bar',
-    data: {
-      labels: vaultSpotBalances.map(item => new Date(Number(item.lastTimestamp)).getDate()),
-      datasets: [{
-        label: 'Total',
-        data: vaultSpotBalances.map(item => Number(item.total / 1e8)),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
+  let uniqueSpotHistoryForChart = [];
+  if (vaultSpotBalances.length > 0) { // Use vaultSpotBalances
+    uniqueSpotHistoryForChart.push(vaultSpotBalances[0]); // Always include the latest
+    for (let i = 1; i < vaultSpotBalances.length; i++) { // Use vaultSpotBalances
+      if (Number(vaultSpotBalances[i].total) !== Number(vaultSpotBalances[i - 1].total)) {
+        uniqueSpotHistoryForChart.push(vaultSpotBalances[i]); // Use vaultSpotBalances
       }
     }
-  });
+  }
 
+  const equityChartCtx = document.getElementById('vaultEquityChart')?.getContext('2d');
+  if (equityChartCtx && uniqueEquityHistoryForChart.length > 0) {
+    const reversedUniqueEquityHistory = [...uniqueEquityHistoryForChart].reverse();
+    
+    // Calculate percentage changes
+    const equityPctChangeData = reversedUniqueEquityHistory.map((item, index, arr) => {
+      if (index === 0) return 0; // No change for the first point
+      const prevValue = Number(arr[index - 1].equity);
+      if (prevValue === 0) return 0; // Avoid division by zero
+      const currentValue = Number(item.equity);
+      return ((currentValue / prevValue) - 1) * 100;
+    });
+    const withdrawablePctChangeData = reversedUniqueEquityHistory.map((item, index, arr) => {
+       if (index === 0) return 0;
+       const prevValue = Number(arr[index - 1].withdrawableAmount);
+       if (prevValue === 0) return 0;
+       const currentValue = Number(item.withdrawableAmount);
+       // Return large number if prev was 0 and current > 0, or 0 otherwise
+       if (prevValue === 0 && currentValue > 0) return 100.0; // Or handle differently
+       if (prevValue === 0) return 0.0;
+       return ((currentValue / prevValue) - 1) * 100;
+    });
+
+    const allEquityChanges = [...equityPctChangeData, ...withdrawablePctChangeData];
+    const dataMinPct = Math.min(...allEquityChanges);
+    const dataMaxPct = Math.max(...allEquityChanges);
+    const maxAbsDev = Math.max(Math.abs(dataMinPct), Math.abs(dataMaxPct));
+    let yMin = -maxAbsDev * 1.1; // 10% padding below
+    let yMax = maxAbsDev * 1.1;  // 10% padding above
+    // Ensure a minimum visible range if changes are tiny
+    if (yMax - yMin < 0.01) { // e.g., minimum +/- 0.005% range
+        yMax = 0.005;
+        yMin = -0.005;
+    }
+
+    // Destroy existing chart instance
+    const existingEquityChart = Chart.getChart(equityChartCtx);
+    if (existingEquityChart) { existingEquityChart.destroy(); }
+    
+    new Chart(equityChartCtx, {
+      type: 'line',
+      data: {
+        labels: reversedUniqueEquityHistory.map(item => new Date(Number(item.lastTimestamp)).getDate()),
+        datasets: [{
+          label: 'Equity (% Change)',
+          data: equityPctChangeData, // Use percentage change data
+          borderColor: 'rgba(75, 192, 192, 1)',
+          fill: false,
+          tension: 0.1, 
+          stepped: true
+        }, {
+          label: 'Withdrawable (% Change)',
+          data: withdrawablePctChangeData, // Use percentage change data
+          borderColor: 'rgba(255, 99, 132, 1)',
+          fill: false,
+          tension: 0.1, 
+          stepped: true
+        }]
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) {
+                            label += context.parsed.y.toFixed(4) + '%'; // Add % sign and more precision
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                min: yMin, // Apply calculated min
+                max: yMax  // Apply calculated max
+            }
+        }
+       }
+    });
+  }
+
+  const spotBalanceChartCtx = document.getElementById('vaultSpotBalanceChart')?.getContext('2d');
+  if (spotBalanceChartCtx && uniqueSpotHistoryForChart.length > 0) {
+    const reversedUniqueSpotHistory = [...uniqueSpotHistoryForChart].reverse();
+    const SPOT_DIVISOR = 1e9; 
+
+    // Calculate absolute values for scaling
+    const spotValues = reversedUniqueSpotHistory.map(item => Number(item.total) / SPOT_DIVISOR);
+
+    const spotDataMin = Math.min(...spotValues);
+    const spotDataMax = Math.max(...spotValues);
+    let spotYMin, spotYMax;
+    if (spotDataMin === spotDataMax) {
+      spotYMin = spotDataMin >= 0 ? spotDataMin * 0.9 : spotDataMin * 1.1; // Adjust padding differently around 0 if needed
+      spotYMax = spotDataMax >= 0 ? spotDataMax * 1.1 : spotDataMax * 0.9;
+    } else {
+      const padding = (spotDataMax - spotDataMin) * 0.1; // 10% padding maybe better for bar chart
+      spotYMin = spotDataMin - padding;
+      spotYMax = spotDataMax + padding;
+    }
+
+    // Destroy existing chart instance
+    const existingSpotChart = Chart.getChart(spotBalanceChartCtx);
+    if (existingSpotChart) { existingSpotChart.destroy(); }
+    
+    new Chart(spotBalanceChartCtx, {
+      type: 'bar', 
+      data: {
+        labels: reversedUniqueSpotHistory.map(item => new Date(Number(item.lastTimestamp)).getDate()),
+        datasets: [{
+          label: 'Total Spot Balance (USDC)', // Revert label
+          data: spotValues, // Use absolute values
+          backgroundColor: 'rgba(54, 162, 235, 0.5)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: { // Remove % sign from tooltip
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) {
+                            label += formatNumber(context.parsed.y, 2); // Use formatNumber
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false, // Allow zoom, even for bar chart
+                min: spotYMin, // Apply calculated min
+                max: spotYMax  // Apply calculated max
+            }
+        }
+       }
+    });
+  }
 }
 
 async function loadHlpTransactions() {
