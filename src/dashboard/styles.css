@@ -1,78 +1,127 @@
-/* Felix the Cat Theme v2 - More Authentic Cartoon Style */
+/* usefelix.xyz Inspired Theme - Dual Mode */
 
 /* Color Palette Variables */
 :root {
-  --felix-black: #1a1a1a;
-  --felix-white: #ffffff;
-  --felix-off-white: #fdfdfd; /* Slightly off-white background */
-  --felix-grey: #aaaaaa;
-  --felix-accent-green: #3a9d4f; /* Classic green */
-  --felix-accent-yellow: #fecb2f; /* Golden yellow */
-  --felix-accent-red: #e53127;   /* Primary red */
-  --felix-border-thickness: 2px;
-  --felix-offset-shadow: 4px 4px 0px var(--felix-black); /* Sharp offset shadow */
+  /* Light Theme (Default) */
+  --felix-bg-body: #FBF9F6;       /* Match usefelix.xyz off-white background */
+  --felix-bg-card: #ffffff;       /* White card background */
+  --felix-border-color: #dee2e6;  /* Standard light border */
+  --felix-text-primary: #212529;  /* Dark primary text */
+  --felix-text-secondary: #6c757d; /* Grey secondary text */
+  --felix-accent-primary: #2ecc71; /* Emerald Green accent */
+  --felix-accent-secondary: #4a90e2; /* Blue secondary accent */
+  --felix-accent-green: #198754;   /* Bootstrap 5 green */
+  --felix-accent-yellow: #ffc107;  /* Bootstrap 5 yellow */
+  --felix-accent-red: #dc3545;    /* Bootstrap 5 red */
+
+  --felix-border-thickness: 1px;
+  --felix-border-radius: 8px; /* Slightly more rounded like target */
+  --felix-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Very subtle shadow for light mode */
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Overrides */
+  --felix-bg-body: #0a0a0a;       /* Near black background */
+  --felix-bg-card: #141414;       /* Very dark grey card background */
+  --felix-border-color: #2a2a2a;  /* Darker border */
+  --felix-text-primary: #e9ecef;  /* Lighter primary text */
+  --felix-text-secondary: #868e96; /* Dimmer secondary text */
+  /* Accent colors remain the same, defined in :root */
+  --felix-shadow: none; /* No shadow in dark mode */
 }
 
 /* Base Styles */
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: var(--felix-off-white);
-  color: var(--felix-black);
+  background-color: var(--felix-bg-body);
+  color: var(--felix-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Sidebar */
+/* Sidebar - Revert to Theme-Dependent */
 .sidebar {
+  background-color: var(--felix-bg-card);
+  border-right: var(--felix-border-thickness) solid var(--felix-border-color);
+  box-shadow: var(--felix-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  /* Add Fixed position styles */
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 100;
-  padding: 48px 0 0;
-  box-shadow: none; /* Remove inner shadow */
-  background-color: var(--felix-black);
-  border-right: var(--felix-border-thickness) solid var(--felix-black); /* Outline */
+  height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Allow internal scrolling if needed */
+  z-index: 1000; /* Ensure it stays on top */
 }
 
+/* Remove potentially conflicting theme-specific sidebar background/border rules */
+/* Ensure these were fully removed or commented out */
+/* 
+[data-theme="dark"] .sidebar {
+   border-color: #2a2a2a; 
+   background-color: #141414; // Example of what to remove
+}
+[data-theme="light"] .sidebar {
+   border-color: #dee2e6; 
+   background-color: #ffffff; // Example of what to remove
+}
+*/
+
 .sidebar-header {
-  padding: 0.5rem 1rem;
-  border-bottom: var(--felix-border-thickness) solid var(--felix-grey);
+  padding: 0.75rem 1rem;
+  border-bottom: var(--felix-border-thickness) solid var(--felix-border-color);
+  transition: border-color 0.2s ease;
+  min-height: 60px; /* Ensure header has some height */
+  display: flex; /* Use flex to center */
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logo {
+  max-height: 40px; /* Adjust as needed */
+  width: auto;
+}
+
+.sidebar-title {
+  color: var(--felix-text-primary);
+  font-weight: 600;
+  font-size: 1.1rem; /* Adjust size as needed */
+  vertical-align: middle; /* Helps align with image if needed */
 }
 
 .sidebar-header h3 {
-  color: var(--felix-white);
-  font-weight: 700;
+  /* color: #e9ecef; */ /* Remove fixed light text */
+  color: var(--felix-text-primary); /* Restore theme text */
+  font-weight: 600;
+  /* Add flex properties for logo alignment */
+  display: flex;
+  align-items: center;
+  justify-content: center; 
 }
 
 .sidebar .nav-link {
-  display: flex;
-  align-items: center;
-  color: var(--felix-grey);
-  padding: 0.8rem 1.2rem;
-  font-weight: 500;
-  transition: all 0.15s ease-out;
-  border-left: 4px solid transparent;
-  white-space: normal;
-  line-height: 1.3;
+  /* color: #868e96; */ /* Remove fixed dim text */
+  color: var(--felix-text-secondary); /* Restore theme text */
+  padding: 0.75rem 1.2rem;
+  font-weight: 400;
+  border-left: 3px solid transparent;
+  transition: color 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease;
 }
 
 .sidebar .nav-link:hover {
-  color: var(--felix-white);
-  background-color: rgba(255, 255, 255, 0.05);
-  border-left-color: var(--felix-accent-yellow);
+  /* color: #e9ecef; */ /* Remove fixed bright text */
+  color: var(--felix-text-primary); /* Restore theme text */
+  background-color: rgba(0, 188, 212, 0.05);
+  border-left-color: var(--felix-accent-primary);
 }
 
 .sidebar .nav-link.active {
-  color: var(--felix-white);
-  background-color: rgba(255, 255, 255, 0.1);
-  font-weight: 700;
-  border-left-color: var(--felix-accent-yellow);
-}
-
-.sidebar .nav-link i {
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
+  color: var(--felix-text-primary); /* Use primary text color instead of accent */
+  /* background-color: rgba(0, 188, 212, 0.1); */ /* Remove background */
+  font-weight: 600; /* Keep bolder */
+  border-left-color: transparent; /* Remove left border highlight */
+  text-decoration: underline; /* Add underline */
+  text-underline-offset: 4px; /* Optional: adjust underline position */
 }
 
 /* Main Content Area */
@@ -81,215 +130,267 @@ main {
 }
 
 /* Headers */
-h1.h1, h2, h3, h4, h5, h6 {
-  color: var(--felix-black);
-  font-weight: 700;
+h1.h1 {
+  color: var(--felix-text-primary);
+  font-weight: 600;
+  font-size: 1.5rem; /* Match usefelix.xyz */
+  line-height: 2rem; /* Match usefelix.xyz */
+}
+h2, h3, h4, h5, h6 {
+  color: var(--felix-text-primary);
+  font-weight: 500; /* Less heavy section titles */
 }
 h2 { /* Section headers */
-  border-bottom: var(--felix-border-thickness) solid var(--felix-black);
-  padding-bottom: 0.5rem;
+  border-bottom: var(--felix-border-thickness) solid var(--felix-border-color);
+  padding-bottom: 0.6rem;
   margin-bottom: 1.5rem !important;
   display: inline-block;
+  font-size: 1.5rem;
+  transition: border-color 0.2s ease;
 }
 
 /* Cards */
 .card {
-  box-shadow: var(--felix-offset-shadow);
-  border: var(--felix-border-thickness) solid var(--felix-black);
-  border-radius: 10px; /* Slightly rounder */
-  background-color: var(--felix-white);
+  box-shadow: var(--felix-shadow);
+  border: var(--felix-border-thickness) solid var(--felix-border-color);
+  border-radius: var(--felix-border-radius);
+  background-color: var(--felix-bg-card);
   margin-bottom: 1.5rem;
-  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .card:hover {
-  transform: translate(-2px, -2px); /* Shift opposite to shadow */
-  box-shadow: 6px 6px 0px var(--felix-black); /* Increase shadow on hover */
+  transform: none;
+  box-shadow: var(--felix-shadow); 
 }
 
 .card-header {
-  background-color: transparent; /* Remove header background */
-  border-bottom: var(--felix-border-thickness) solid var(--felix-black);
-  font-weight: 700;
-  color: var(--felix-black);
+  background-color: transparent;
+  border-bottom: var(--felix-border-thickness) solid var(--felix-border-color);
+  font-weight: 500;
+  color: var(--felix-text-primary);
   padding: 0.75rem 1.25rem;
+  transition: border-color 0.2s ease;
 }
 
 .card-body {
   padding: 1.25rem;
 }
 
-/* Summary Cards Specific Styling - SOLID COLORS */
-.card.bg-dark { background-color: var(--felix-black) !important; color: var(--felix-white) !important; }
-.card.bg-success { background-color: var(--felix-accent-green) !important; color: var(--felix-white) !important; }
-.card.bg-warning { background-color: var(--felix-accent-yellow) !important; color: var(--felix-black) !important; }
-.card.bg-danger { background-color: var(--felix-accent-red) !important; color: var(--felix-white) !important; }
+/* Summary Cards Specific Styling - Cleaner */
+/* Remove specific bg-* class overrides, use standard card background */
+.card.bg-dark, .card.bg-success, .card.bg-warning, .card.bg-danger {
+     background-color: var(--felix-bg-card) !important;
+     border-color: var(--felix-border-color); /* Default border */
+}
+/* Optionally add a colored left border for status */
+.card.bg-success { border-left: 4px solid var(--felix-accent-green); }
+.card.bg-warning { border-left: 4px solid var(--felix-accent-yellow); }
+.card.bg-danger { border-left: 4px solid var(--felix-accent-red); }
 
-/* Ensure text/links contrast on solid backgrounds */
-.card.bg-dark h5, .card.bg-dark h2, .card.bg-dark a, .card.bg-dark i,
-.card.bg-success h5, .card.bg-success h2, .card.bg-success a, .card.bg-success i,
-.card.bg-danger h5, .card.bg-danger h2, .card.bg-danger a, .card.bg-danger i {
-    color: var(--felix-white) !important;
-    opacity: 1;
-}
-.card.bg-warning h5, .card.bg-warning h2, .card.bg-warning a, .card.bg-warning i {
-    color: var(--felix-black) !important;
-     opacity: 1;
-}
+/* Ensure text is always readable */
+.card h5 { color: var(--felix-text-secondary); font-weight: 400; font-size: 0.9rem;}
+.card h2 { color: var(--felix-text-primary); }
+.card a, .card i { color: var(--felix-text-secondary); }
+.card a:hover { color: var(--felix-accent-primary); }
 
 /* Summary card values */
 .card h2 {
-  font-size: 2.5rem; /* Larger value text */
-  font-weight: 700;
-  margin-bottom: 0;
-  border: none;
-  padding-bottom: 0;
-  margin-bottom: 0 !important;
+  font-size: 2rem; /* Slightly smaller */
+  font-weight: 600;
+  border: none; /* Remove inherited border */
+  padding-bottom: 0; /* Remove inherited padding */
+  margin-bottom: 0 !important; /* Remove inherited margin */
   display: block;
-  letter-spacing: -1px;
 }
 
 /* Card Footer */
 .card-footer {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-top: var(--felix-border-thickness) solid var(--felix-black);
+  background-color: transparent;
+  border-top: var(--felix-border-thickness) solid var(--felix-border-color);
   padding: 0.6rem 1.25rem;
+  transition: border-color 0.2s ease;
 }
-.card-footer a.small { font-weight: 700; } /* Bolder footer links */
-
+/* Fix Link Visibility */
+.card-footer a.small {
+  font-weight: 400;
+  color: #6c757d; /* Default to darker grey (visible on light bg) */
+  transition: color 0.2s ease;
+}
+.card-footer a.small:hover {
+  color: var(--felix-accent-primary);
+}
+/* Override for dark theme */
+[data-theme="dark"] .card-footer a.small {
+  color: #868e96; /* Use lighter grey text color in dark mode */
+}
 
 /* System Health / Risk Card Specifics */
 .card .list-group-item {
-    border-color: var(--felix-grey);
-    background-color: transparent; /* Ensure no list background */
-    padding: 0.75rem 0; /* Adjust padding */
+    border-color: var(--felix-border-color);
+    background-color: transparent;
+    padding: 0.7rem 0;
+    color: var(--felix-text-secondary);
+    transition: border-color 0.2s ease;
 }
 .list-group-flush > .list-group-item:last-child {
-    border-bottom-width: 0; /* Remove bottom border on last item */
+    border-bottom-width: 0;
 }
 
 /* Progress Bar */
 .progress {
-  border-radius: 5px;
-  background-color: var(--felix-grey);
-  border: 1px solid var(--felix-black);
-  padding: 1px; /* Inner padding */
-  height: 24px !important; /* Make slightly taller */
+  border-radius: var(--felix-border-radius);
+  background-color: var(--felix-border-color); /* Use border color for track */
+  border: none;
+  padding: 0;
+  height: 12px !important; /* Slimmer */
+  transition: background-color 0.2s ease;
 }
 .progress-bar {
-   font-weight: 700;
-   border-radius: 3px; /* Inner bar radius */
+   font-weight: 500;
+   font-size: 0.7rem;
+   border-radius: var(--felix-border-radius); 
+   color: var(--felix-text-primary) !important;
+   transition: background-color 0.2s ease;
 }
-#risk-score-bar.bg-success { background-color: var(--felix-accent-green) !important; color: var(--felix-white) !important; }
-#risk-score-bar.bg-warning { background-color: var(--felix-accent-yellow) !important; color: var(--felix-black) !important; }
-#risk-score-bar.bg-danger { background-color: var(--felix-accent-red) !important; color: var(--felix-white) !important; }
+#risk-score-bar.bg-success { background-color: var(--felix-accent-green) !important; }
+#risk-score-bar.bg-warning { background-color: var(--felix-accent-yellow) !important; color: #333 !important; }
+#risk-score-bar.bg-danger { background-color: var(--felix-accent-red) !important; }
 
 
 /* Health Metrics Badges */
 .badge {
-    font-weight: 700;
-    font-size: 0.9rem; /* Larger badges */
+    font-weight: 500;
+    font-size: 0.8rem;
     padding: 0.4em 0.7em;
-    border: 1px solid var(--felix-black);
+    border: none;
+    border-radius: var(--felix-border-radius);
 }
-.badge.bg-primary { background-color: var(--felix-black) !important; color: var(--felix-white)!important;}
-.badge.bg-warning { background-color: var(--felix-accent-yellow) !important; color: var(--felix-black) !important; }
-.badge.bg-success { background-color: var(--felix-accent-green) !important; color: var(--felix-white)!important;}
+/* Use accent colors directly */
+.badge.bg-primary { background-color: var(--felix-accent-primary) !important; color: white !important; }
+.badge.bg-warning { background-color: var(--felix-accent-yellow) !important; color: #333 !important; }
+.badge.bg-success { background-color: var(--felix-accent-green) !important; color: white !important;}
 
 /* Tables */
 .table {
   margin-bottom: 0;
-  border: var(--felix-border-thickness) solid var(--felix-black);
+  border: var(--felix-border-thickness) solid var(--felix-border-color);
+  color: var(--felix-text-primary);
+  transition: border-color 0.2s ease;
 }
-.table > :not(caption) > * > * { /* Target all cells/headers */
-    border-bottom-width: var(--felix-border-thickness); /* Use thicker lines within table */
-    border-color: var(--felix-black);
+.table > :not(caption) > * > * {
+    border-bottom-width: var(--felix-border-thickness);
+    border-color: var(--felix-border-color);
+    color: inherit; 
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .table thead th {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
   text-transform: uppercase;
-  color: var(--felix-black);
-  background-color: var(--felix-white); /* White header */
+  letter-spacing: 0.5px;
+  color: var(--felix-text-secondary);
+  background-color: var(--felix-bg-card);
   border-bottom-width: var(--felix-border-thickness);
+  border-color: var(--felix-border-color);
 }
 
 .table td {
   vertical-align: middle;
-  font-size: 0.9rem;
-  border-top: none; /* Remove default top border */
+  font-size: 0.85rem;
+  border-top: none;
+  padding: 0.8rem 0.75rem; /* Adjust padding */
 }
 
-/* Remove Table Striping for B&W feel */
+/* Table Striping - More Subtle */
 .table-striped > tbody > tr:nth-of-type(odd) > * {
-    --bs-table-accent-bg: transparent;
+    --bs-table-accent-bg: rgba(128, 128, 128, 0.03); /* Very subtle grey */
+    color: var(--felix-text-primary);
 }
+[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+     --bs-table-accent-bg: rgba(255, 255, 255, 0.02); /* Subtle white */
+}
+
 .table-striped > tbody > tr:hover > * {
-     --bs-table-hover-bg: rgba(0,0,0,0.05); /* Subtle hover */
+     --bs-table-hover-bg: rgba(0, 188, 212, 0.05); /* Subtle cyan hover */
+     color: var(--felix-text-primary);
 }
 
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--felix-grey);
-  border-left: var(--felix-border-thickness) solid var(--felix-black);
+  background: var(--felix-bg-body);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--felix-black);
-  border-radius: 0; /* Square thumb */
-  border: 2px solid var(--felix-white); /* White border around thumb */
+  background: var(--felix-border-color);
+  border-radius: 3px;
+  border: none;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333;
+  background: var(--felix-text-secondary);
 }
 
 
 /* Top Bar */
 .date-time {
-    color: var(--felix-black);
-    font-size: 0.9em;
-    font-weight: 500;
+    color: var(--felix-text-secondary);
+    font-size: 0.85em;
+    font-weight: 400;
 }
 
-/* Remove old styles that might conflict */
-.status-badge, .status-success, .status-warning, .status-danger {
-  /* These specific classes are likely no longer needed with Bootstrap badge overrides */
+/* Theme Toggle Button */
+.theme-toggle {
+    border-color: var(--felix-border-color);
+    color: var(--felix-text-secondary);
+    padding: 0.25rem 0.6rem;
+    background: transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.btn-outline-secondary {
-  color: var(--felix-black);
-  border-color: var(--felix-black);
-  border-width: var(--felix-border-thickness);
-  font-weight: 700;
-}
-.btn-outline-secondary:hover {
-  background-color: var(--felix-black);
-  border-color: var(--felix-black);
-  color: var(--felix-white);
+.theme-toggle:hover {
+    color: var(--felix-text-primary);
+    border-color: var(--felix-accent-primary);
+    background: rgba(0, 188, 212, 0.1);
 }
 
-@keyframes pulse { /* Keep or style */
-  0% { opacity: 0.7; }
-  50% { opacity: 1; }
-  100% { opacity: 0.7; }
+.theme-toggle i {
+    vertical-align: middle; /* Align icons better */
+    transition: opacity 0.2s ease;
 }
 
-.loading {
-  /* Keep or style loading indicator */
+.theme-toggle-divider {
+    margin: 0 0.2rem;
+    opacity: 0.5;
 }
 
-/* Responsive fixes */
+/* Default (Light mode) Icon Opacity */
+#theme-icon-sun {
+    opacity: 1;
+}
+#theme-icon-moon {
+    opacity: 0.4; /* Dim moon in light mode */
+}
+
+/* Dark Mode Icon Opacity */
+body[data-theme="dark"] #theme-icon-sun {
+    opacity: 0.4; /* Dim sun in dark mode */
+}
+body[data-theme="dark"] #theme-icon-moon {
+    opacity: 1;
+}
+
+/* Responsive fixes - Keep as is */
 @media (max-width: 768px) {
   .sidebar {
     position: static;
     height: auto;
     padding-top: 0;
     border-right: none;
-    border-bottom: var(--felix-border-thickness) solid var(--felix-black);
+    border-bottom: var(--felix-border-thickness) solid var(--felix-border-color);
   }
   main { margin-top: 20px; }
 } 

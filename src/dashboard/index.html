@@ -15,12 +15,13 @@
   <div class="container-fluid">
     <div class="row">
       <!-- Sidebar -->
-      <nav class="col-md-2 col-lg-2 d-md-block bg-dark sidebar collapse">
-        <div class="position-sticky pt-3">
-          <div class="sidebar-header">
-            <h3 class="text-center text-light my-4">Felix Vaults</h3>
+      <nav class="col-md-2 col-lg-2 d-md-block sidebar collapse">
+        <div class="position-sticky pt-3 d-flex flex-column h-100">
+          <div class="sidebar-header text-center">
+            <img src="https://usefelix.xyz/_next/image?url=%2Ffelix-navbar.png&w=96&q=75" alt="Felix Logo" class="sidebar-logo">
+            <span class="sidebar-title ms-2">Felix Vaults</span>
           </div>
-          <ul class="nav flex-column">
+          <ul class="nav flex-column flex-grow-1">
             <li class="nav-item">
               <a class="nav-link active" href="#dash">
                 <i class="bi bi-house-door"></i> Overview
@@ -69,8 +70,13 @@
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="dash">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 class="h1">feBTC Vault Monitor Dashboard</h1>
-          <div class="btn-toolbar mb-2 mb-md-0">
-            <span class="date-time" id="last-updated">Last updated: Never</span>
+          <div class="btn-toolbar mb-2 mb-md-0 align-items-center">
+            <span class="date-time me-3" id="last-updated">Last updated: Never</span>
+            <button id="theme-toggle-button" class="btn btn-outline-secondary btn-sm theme-toggle" type="button">
+              <i id="theme-icon-sun" class="bi bi-sun-fill"></i>
+              <span class="theme-toggle-divider">/</span>
+              <i id="theme-icon-moon" class="bi bi-moon-fill"></i>
+            </button>
           </div>
         </div>
 
@@ -113,38 +119,38 @@
             <!-- Summary Cards Row 1 -->
             <div class="row">
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark text-white mb-4">
+                <div class="card bg-dark mb-4">
                   <div class="card-body text-center">
                     <h5>HLP Equity (USDC)</h5>
                     <h2 id="hlp-equity">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark text-white mb-4">
+                <div class="card bg-dark mb-4">
                   <div class="card-body text-center">
                     <h5>HLP Spot (USDC)</h5>
                     <h2 id="hlp-spot-balance">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark text-white mb-4">
+                <div class="card bg-dark mb-4">
                   <div class="card-body text-center">
                     <h5>Total Assets (BTC)</h5>
                     <h2 id="total-assets">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
@@ -152,38 +158,38 @@
             <!-- Summary Cards Row 2 -->
             <div class="row mb-5">
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-success text-white mb-4">
+                <div class="card bg-success mb-4">
                   <div class="card-body text-center">
                     <h5>Total Shares (feBTC)</h5>
                     <h2 id="total-shares">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#vaults">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-warning text-white mb-4">
+                <div class="card bg-warning mb-4">
                   <div class="card-body text-center">
                     <h5>Active Users</h5>
                     <h2 id="active-users">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#vault-users">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#vault-users">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-danger text-white mb-4">
+                <div class="card bg-danger mb-4">
                   <div class="card-body text-center">
                     <h5>Debt (feUSD)</h5>
                     <h2 id="outstanding-debt">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="#loans">View Details</a>
-                    <i class="bi bi-arrow-right text-white"></i>
+                    <a class="small stretched-link" href="#loans">View Details</a>
+                    <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>

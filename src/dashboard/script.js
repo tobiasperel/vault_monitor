@@ -169,7 +169,7 @@ function updateRiskMetrics(loans = []) {
     let riskClass = "bg-success";
     let riskWidth = "25%";
     
-    if (loansNearLiquidation > 0 || avgHealthFactor < 1.5) {
+    if (loansNearLiquidation > 0 || avgHealthFactor < 1) {
       riskLevel = "High";
       riskClass = "bg-danger";
       riskWidth = "75%";
@@ -645,7 +645,7 @@ async function loadL1Data() {
   const spotBalanceChartCtx = document.getElementById('vaultSpotBalanceChart')?.getContext('2d');
   if (spotBalanceChartCtx && uniqueSpotHistoryForChart.length > 0) {
     const reversedUniqueSpotHistory = [...uniqueSpotHistoryForChart].reverse();
-    const SPOT_DIVISOR = 1e9; 
+    const SPOT_DIVISOR = 1e8; 
 
     // Calculate absolute values for scaling
     const spotValues = reversedUniqueSpotHistory.map(item => Number(item.total) / SPOT_DIVISOR);
@@ -758,7 +758,7 @@ async function loadHlpTransactions() {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${event.eventType}</td>
-        <td>${event.eventType === 'l1-deposit' ? Number(event.amount) / 1e6 : ''}</td>
+        <td>${event.eventType === 'l1-deposit' ? Number(event.amount) / 1e6 : '-'}</td>
         <td>${event.eventType === 'l1-withdraw' ? Number(event.amount) / 1e6 : ''}</td>
         <td>${formatTimestamp(event.timestamp)}</td>
       `;
@@ -844,33 +844,15 @@ function createLoanHealthChart() {
 }
 
 // Theme Switching Logic
-let themeToggle = null; 
-let themeLabel = null;
-
-if (isBrowser) { 
-  themeToggle = document.getElementById('theme-toggle');
-  themeLabel = document.querySelector('.theme-label');
-
-  if (themeToggle) {
-    themeToggle.addEventListener('change', toggleTheme);
-  }
-}
-
-// Function to apply the theme
 function applyTheme(theme) {
   if (!isBrowser) return;
   if (theme === 'dark') {
     document.body.setAttribute('data-theme', 'dark');
-    if (themeToggle) themeToggle.checked = true;
-    if (themeLabel) themeLabel.textContent = 'Light Mode';
   } else {
     document.body.removeAttribute('data-theme');
-    if (themeToggle) themeToggle.checked = false;
-    if (themeLabel) themeLabel.textContent = 'Dark Mode';
   }
 }
 
-// Function to toggle theme and save preference
 function toggleTheme() {
   if (!isBrowser) return;
   const currentTheme = document.body.getAttribute('data-theme');
@@ -879,10 +861,10 @@ function toggleTheme() {
   applyTheme(newTheme);
 }
 
-// Load saved theme on initial page load
 function loadTheme() {
   if (!isBrowser) return;
-  const savedTheme = localStorage.getItem('theme') || 'light';
+  // Default to light unless 'dark' is explicitly saved
+  const savedTheme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
   applyTheme(savedTheme);
 }
 
@@ -975,12 +957,18 @@ function setupSidebarNavigation() {
 
 }
 
-// Modify initDashboard to call the new setup function
+// Modify initDashboard to call loadTheme and add listener
 function initDashboard() {
   console.log('Initializing dashboard...');
   if (isBrowser) {
     loadTheme(); // Load theme preferences first
     setupSidebarNavigation(); // Setup navigation interactions
+
+    // Add theme toggle button listener
+    const themeToggleButton = document.getElementById('theme-toggle-button');
+    if (themeToggleButton) {
+      themeToggleButton.addEventListener('click', toggleTheme);
+    }
   }
 
   console.log('Loading dashboard data...');
