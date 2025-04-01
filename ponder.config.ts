@@ -89,6 +89,18 @@ export default createConfig({
       abi: ensureAbiArray(TroveManagerAbi),
       address: process.env.TROVE_MANAGER_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'),
+      filter: [{
+        event: 'TroveOperation',
+        args: {
+          from: process.env.BORING_VAULT_ADDRESS as `0x${string}`,
+        },
+      },
+      {
+        event: 'TroveUpdated',
+        args: {
+          from: process.env.BORING_VAULT_ADDRESS as `0x${string}`,
+        },
+      }],
     },
     AddRemoveManagers: {
       network: "hyperliquid",
@@ -139,7 +151,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 200
+      interval: 10000
     },
   },
   accounts: {

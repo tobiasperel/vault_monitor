@@ -12,13 +12,13 @@ update_env_file() {
   
   cat > .env.temp << EOL
 # Mainnet RPC URL used for fetching blockchain data
-PONDER_RPC_URL_1="http://34.172.169.184:3001/evm"
+PONDER_RPC_URL_1="http://34.133.15.250:3001/evm"
 
 # Postgres database URL for Ponder - pointing to Supabase PostgreSQL
 DATABASE_URL="postgresql://postgres:HjYeGV2Lyr9J4V3T@db.nctdcgedcpptlifinpky.supabase.co:5432/postgres?sslmode=require&pool_timeout=0"
 
 # Base chain RPC
-PONDER_RPC_URL_BASE="http://34.172.169.184:3001/evm"
+PONDER_RPC_URL_BASE="http://34.133.15.250:3001/evm"
 
 # Contract addresses
 BORING_VAULT_ADDRESS="0x208EeF7B7D1AcEa7ED4964d3C5b0c194aDf17412"
@@ -154,6 +154,18 @@ export default createConfig({
       abi: ensureAbiArray(TroveManagerAbi),
       address: process.env.TROVE_MANAGER_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'),
+      filter: [{
+        event: 'TroveOperation',
+        args: {
+          from: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      },
+      {
+        event: 'TroveUpdated',
+        args: {
+          from: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
+        },
+      }],
     },
     AddRemoveManagers: {
       network: "hyperliquid",
@@ -204,7 +216,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 200
+      interval: 10000
     },
   },
   accounts: {
