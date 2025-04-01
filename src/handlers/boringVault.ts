@@ -48,73 +48,56 @@ async function safeSupabaseInsert(table: string, data: any) {
 
 // Helper function to update vault entity
 async function updateVaultEntity(context: any, vaultAddress: string, event: any, eventType: string) {
-  const existingVault = await context.db.find(vaultEntity, { id: vaultAddress });
   const timestamp = BigInt(event.block.timestamp);
   
-  if (existingVault && existingVault.length > 0) {
-    const vault = existingVault[0];
-    await context.db.update(vaultEntity).values({
-      where: { id: vaultAddress },
-      data: {
-        depositCount: eventType === 'deposit' ? vault.depositCount + 1 : vault.depositCount,
-        withdrawCount: eventType === 'withdraw' ? vault.withdrawCount + 1 : vault.withdrawCount,
-        lastEventTimestamp: timestamp,
-        lastEventBlock: BigInt(event.block.number),
-        lastEventType: eventType,
-        lastEventAmount: BigInt(event.args.amount || 0),
-        lastEventUser: event.args.from || event.args.to || '',
-        totalAssets: vault.totalAssets + BigInt(event.args.amount || 0),
-        totalShares: vault.totalShares + BigInt(event.args.shares || 0),
-      },
-    });
-  } else {
-    await context.db.insert(vaultEntity).values({
-      id: vaultAddress,
-      totalAssets: BigInt(event.args.amount || 0),
-      totalShares: BigInt(event.args.shares || 0),
-      depositCount: eventType === 'deposit' ? 1 : 0,
-      withdrawCount: eventType === 'withdraw' ? 1 : 0,
-      userCount: 1,
-      lastEventTimestamp: timestamp,
-      lastEventBlock: BigInt(event.block.number),
-      lastEventType: eventType,
-      lastEventAmount: BigInt(event.args.amount || 0),
-      lastEventUser: event.args.from || event.args.to || '',
-    });
-  }
+  await context.db.insert(vaultEntity).values({
+    id: vaultAddress,
+    totalAssets: BigInt(event.args.amount || 0),
+    totalShares: BigInt(event.args.shares || 0),
+    depositCount: eventType === 'deposit' ? 1 : 0,
+    withdrawCount: eventType === 'withdraw' ? 1 : 0,
+    userCount: 1,
+    lastEventTimestamp: timestamp,
+    lastEventBlock: BigInt(event.block.number),
+    lastEventType: eventType,
+    lastEventAmount: BigInt(event.args.amount || 0),
+    lastEventUser: event.args.from || '',
+  }).onConflictDoUpdate((row: any) => ({
+    totalAssets: row.totalAssets + BigInt(event.args.amount || 0),
+    totalShares: row.totalShares + BigInt(event.args.shares || 0),
+    depositCount: row.depositCount + (eventType === 'deposit' ? 1 : 0),
+    withdrawCount: row.withdrawCount + (eventType === 'withdraw' ? 1 : 0),
+    userCount: row.userCount + 1,
+    lastEventTimestamp: timestamp,
+    lastEventBlock: BigInt(event.block.number),
+    lastEventType: eventType,
+    lastEventAmount: BigInt(event.args.amount || 0),
+    lastEventUser: event.args.from || '',
+  }));
 }
 
 // Helper function to update vault user entity
 async function updateVaultUserEntity(context: any, vaultAddress: string, userAddress: string, event: any, eventType: string) {
   const userId = `${vaultAddress}-${userAddress}`;
-  const existingUser = await context.db.find(vaultUserEntity, { id: userId });
   const timestamp = BigInt(event.block.timestamp);
   
-  if (existingUser && existingUser.length > 0) {
-    const user = existingUser[0];
-    await context.db.update(vaultUserEntity).values({
-      where: { id: userId },
-      data: {
-        shares: BigInt(event.args.shares || 0),
-        depositCount: eventType === 'deposit' ? user.depositCount + 1 : user.depositCount,
-        withdrawCount: eventType === 'withdraw' ? user.withdrawCount + 1 : user.withdrawCount,
-        lastActionTimestamp: timestamp,
-        isActive: true,
-      },
-    });
-  } else {
-    await context.db.insert(vaultUserEntity).values({
-      id: userId,
-      vaultAddress: vaultAddress,
-      userAddress: userAddress,
-      shares: BigInt(event.args.shares || 0),
-      depositCount: eventType === 'deposit' ? 1 : 0,
-      withdrawCount: eventType === 'withdraw' ? 1 : 0,
-      lastActionTimestamp: timestamp,
-      unlockTime: BigInt(0), // No lock time for BoringVault
-      isActive: true,
-    });
-  }
+  await context.db.insert(vaultUserEntity).values({
+    id: userId,
+    vaultAddress: vaultAddress,
+    userAddress: userAddress,
+    shares: BigInt(event.args.shares || 0),
+    depositCount: eventType === 'deposit' ? 1 : 0,
+    withdrawCount: eventType === 'withdraw' ? 1 : 0,
+    lastActionTimestamp: timestamp,
+    unlockTime: BigInt(0), // No lock time for BoringVault
+    isActive: true,
+  }).onConflictDoUpdate((row: any) => ({
+    shares: row.shares + BigInt(event.args.shares || 0),
+    depositCount: row.depositCount + (eventType === 'deposit' ? 1 : 0),
+    withdrawCount: row.withdrawCount + (eventType === 'withdraw' ? 1 : 0),
+    lastActionTimestamp: timestamp,
+    isActive: true,
+  }));
 }
 
 // Handler for Enter events (deposits)
@@ -129,7 +112,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
-    const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
+    const eventId = `${event.transaction.hash}-${event.log.logIndex}-${event.args.from}-${event.args.shares}`;
     
     // Safe handling for addresses
     const contractAddress = event.log.address.toLowerCase();

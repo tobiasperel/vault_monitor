@@ -55,7 +55,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
     const eventId = `${event.transaction.hash}-${event.log.logIndex}`;
     
     // Create composite ID for loan
-    const loanId = `${event.log.address.toLowerCase()}-${receiver.toLowerCase()}`;
+    const loanId = `${event.log.address.toLowerCase()}-${receiver.toLowerCase()}-${event.args.nonce}`;
     
     // Get existing loan data if it exists
     const existingLoan = await context.db.find(loan, { id: loanId });

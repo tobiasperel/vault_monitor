@@ -44,7 +44,7 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: vault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: BigInt(event.block.timestamp),
+      timestamp: event.block.timestamp.toString(),
       transactionHash: event.transaction.hash,
     });
     // --- End Supabase Logging ---
@@ -125,7 +125,7 @@ ponder.on("HLP:SpotSend", async (params: any) => {
         user: user.toLowerCase(),
         vault: destination.toLowerCase(),
         blockNumber: event.block.number.toString(),
-        timestamp: BigInt(event.block.timestamp),
+        timestamp: event.block.timestamp.toString(),
         transactionHash: event.transaction.hash,
       });
       // --- End Supabase Logging ---
@@ -172,7 +172,7 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: targetVault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: BigInt(event.block.timestamp),
+      timestamp: event.block.timestamp.toString(),
       transactionHash: event.transaction.hash,  
     });
     // --- End Supabase Logging ---
@@ -223,7 +223,7 @@ ponder.on("USDC:Transfer", async (params: any) => {
             user: from.toLowerCase(), // User is the sender (the vault)
             vault: to.toLowerCase(), // Vault here might represent the destination (L1 Bridge?)
             blockNumber: event.block.number.toString(),
-            timestamp: BigInt(event.block.timestamp),
+            timestamp: event.block.timestamp.toString(),
             transactionHash: event.transaction.hash,
         });
         // --- End Supabase Logging ---
