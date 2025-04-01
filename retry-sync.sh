@@ -233,7 +233,7 @@ while true; do
   create_config_file
   
   # Run Ponder and capture output to a temporary file
-  NODE_ENV=development PORT=3001 API_PORT=42070 yarn dev 2>&1 | tee ponder_output.log &
+  NODE_ENV=development PORT=3001 API_PORT=3002 yarn dev 2>&1 | tee ponder_output.log &
   PID=$!
   
   # Wait a bit for Ponder to start
