@@ -77,11 +77,17 @@ ponder.on("Teller:Deposit", async (params: any) => {
       await context.db.insert(loan).values({
         id: loanId,
         borrowerAddress: receiver.toLowerCase(),
-        borrowedAmount: BigInt(0), // No borrowed amount for deposits
+        borrowedAmount: BigInt(0),
         collateralAmount: BigInt(collateralAmount),
         healthFactor: BigInt(100), // Safe health factor for collateral only
         lastUpdatedBlock: BigInt(blockNumber),
         lastUpdatedTimestamp: timestamp,
+      }).onConflictDoUpdate({
+        updateData: {
+          collateralAmount: BigInt(collateralAmount),
+          lastUpdatedBlock: BigInt(blockNumber),
+          lastUpdatedTimestamp: timestamp,
+        },
       });
     }
     
@@ -95,7 +101,17 @@ ponder.on("Teller:Deposit", async (params: any) => {
       timestamp: timestamp,
       transactionHash: event.transaction.hash,
       liquidatorAddress: '', // No liquidator for deposits
-    });
+    }).onConflictDoUpdate((row: any) => ({
+      collateralAmount: row.collateralAmount + BigInt(depositAmount),
+      lastUpdatedBlock: BigInt(blockNumber),
+      lastUpdatedTimestamp: timestamp,
+      eventType: 'deposit',
+      amount: row.amount + BigInt(depositAmount),
+      blockNumber: BigInt(blockNumber),
+      timestamp: timestamp,
+      transactionHash: event.transaction.hash,
+      liquidatorAddress: '', // No liquidator for deposits
+    }));
     
     // Store raw event data in Supabase
     await safeSupabaseInsert('raw_events', {

@@ -393,7 +393,7 @@ async function loadVaultUsers() {
 async function loadLoans() {
   const query = `
     query {
-      loanEntitys(orderBy: "outstandingDebt", where : { borrowerAddress: "0xDd00059904ddF45e30b4131345957f76F26b8f6c"}) {
+      loanEntitys(where : { borrowerAddress: "0xdd00059904ddf45e30b4131345957f76f26b8f6c"}) {
         items {
           id
           borrowerAddress
@@ -456,7 +456,7 @@ async function loadLoans() {
 async function loadLoanEvents() {
   const query = `
     query {
-      loanEventEntitys(orderBy: "timestamp", where : { borrowerAddress: "0xDd00059904ddF45e30b4131345957f76F26b8f6c"}) {
+      loanEventEntitys(where : { borrowerAddress: "0xdd00059904ddf45e30b4131345957f76f26b8f6c"}) {
         items {
           id
           borrowerAddress
