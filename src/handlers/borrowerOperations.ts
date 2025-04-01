@@ -63,7 +63,7 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
     outstandingDebt: BigInt(event.args._debt || event.args._debtChangeFromOperation || 0),
     collateralAmount: BigInt(event.args._coll || event.args._collChangeFromOperation || 0),
     interestRate: BigInt(event.args._annualInterestRate || 0),
-    lastEventTimestamp: new Date(Number(event.block.timestamp)),
+    lastEventTimestamp: BigInt(event.block.timestamp),
     lastEventBlock: BigInt(event.block.number),
     lastEventType: eventType,
     isActive: true,
@@ -102,7 +102,7 @@ async function storeLoanEvent(context: any, eventId: string, loanId: string, eve
       collateralChange: BigInt(event.args._collChangeFromOperation || event.args._collChange || 0),
       healthFactorAfter: 1.0, // Will be updated by a separate calculation
       blockNumber: BigInt(event.block.number),
-      timestamp: new Date(Number(event.block.timestamp)),
+      timestamp: BigInt(event.block.timestamp),
       transactionHash: event.transaction.hash,
       borrowerAddress: event.transaction.from,
       troveId: event.args._troveId,
@@ -122,7 +122,7 @@ ponder.on("TroveManager:TroveOperation", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -145,7 +145,7 @@ ponder.on("TroveManager:TroveOperation", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -157,7 +157,7 @@ ponder.on("TroveManager:TroveOperation", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -179,7 +179,7 @@ ponder.on("TroveManager:TroveUpdated", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -202,7 +202,7 @@ ponder.on("TroveManager:TroveUpdated", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -214,7 +214,7 @@ ponder.on("TroveManager:TroveUpdated", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -236,7 +236,7 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -259,7 +259,7 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -271,7 +271,7 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -286,7 +286,7 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
         outstandingDebt: BigInt(0),
         collateralAmount: BigInt(0),
         healthFactor: 0.0,
-        lastEventTimestamp: new Date(timestamp * 1000),
+        lastEventTimestamp: timestamp,
         lastEventBlock: BigInt(blockNumber),
         lastEventType: 'liquidation',
         isActive: false,
@@ -306,7 +306,7 @@ ponder.on("TroveManager:BatchUpdated", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -329,7 +329,7 @@ ponder.on("TroveManager:BatchUpdated", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -341,7 +341,7 @@ ponder.on("TroveManager:BatchUpdated", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -363,7 +363,7 @@ ponder.on("TroveManager:BatchedTroveUpdated", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -386,7 +386,7 @@ ponder.on("TroveManager:BatchedTroveUpdated", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -398,7 +398,7 @@ ponder.on("TroveManager:BatchedTroveUpdated", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -420,7 +420,7 @@ ponder.on("TroveManager:Redemption", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -436,7 +436,7 @@ ponder.on("TroveManager:Redemption", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -448,7 +448,7 @@ ponder.on("TroveManager:Redemption", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
     console.log('TroveManager:Redemption event processed');
@@ -464,7 +464,7 @@ ponder.on("TroveManager:RedemptionFeePaidToTrove", async (params: any) => {
     const { event, context } = params;
     if (!event.args) return;
     
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -480,7 +480,7 @@ ponder.on("TroveManager:RedemptionFeePaidToTrove", async (params: any) => {
       contract_address: contractAddress,
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -492,7 +492,7 @@ ponder.on("TroveManager:RedemptionFeePaidToTrove", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
     console.log('TroveManager:RedemptionFeePaidToTrove event processed');

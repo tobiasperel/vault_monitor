@@ -44,7 +44,7 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: vault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: new Date(Number(event.block.timestamp) * 1000),
+      timestamp: BigInt(event.block.timestamp),
       transactionHash: event.transaction.hash,
     });
     // --- End Supabase Logging ---
@@ -57,7 +57,7 @@ ponder.on("HLP:VaultTransfer", async (params: any) => {
       user: user, // Store original address
       vault: vault, // Store original address
       blockNumber: event.block.number, // Pass BigInt directly
-      timestamp: event.block.timestamp, // Pass BigInt directly
+      timestamp: BigInt(event.block.timestamp), // Pass BigInt directly
       transactionHash: event.transaction.hash,
     });
     // --- End Ponder DB Insert ---
@@ -125,7 +125,7 @@ ponder.on("HLP:SpotSend", async (params: any) => {
         user: user.toLowerCase(),
         vault: destination.toLowerCase(),
         blockNumber: event.block.number.toString(),
-        timestamp: new Date(Number(event.block.timestamp) * 1000),
+        timestamp: BigInt(event.block.timestamp),
         transactionHash: event.transaction.hash,
       });
       // --- End Supabase Logging ---
@@ -138,7 +138,7 @@ ponder.on("HLP:SpotSend", async (params: any) => {
         user: user,
         vault: destination,
         blockNumber: event.block.number, // Pass BigInt directly
-        timestamp: event.block.timestamp, // Pass BigInt directly
+        timestamp: BigInt(event.block.timestamp), // Pass BigInt directly
         transactionHash: event.transaction.hash,
       });
       // --- End Ponder DB Insert ---
@@ -172,7 +172,7 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
       user: user.toLowerCase(),
       vault: targetVault.toLowerCase(),
       blockNumber: event.block.number.toString(),
-      timestamp: new Date(Number(event.block.timestamp) * 1000),
+      timestamp: BigInt(event.block.timestamp),
       transactionHash: event.transaction.hash,  
     });
     // --- End Supabase Logging ---
@@ -185,7 +185,7 @@ ponder.on("HLP:UsdClassTransfer", async (params: any) => {
       user: user,
       vault: targetVault,
       blockNumber: event.block.number, // Pass BigInt directly
-      timestamp: event.block.timestamp, // Pass BigInt directly
+      timestamp: BigInt(event.block.timestamp), // Pass BigInt directly
       transactionHash: event.transaction.hash,
     });
     // --- End Ponder DB Insert ---
@@ -223,7 +223,7 @@ ponder.on("USDC:Transfer", async (params: any) => {
             user: from.toLowerCase(), // User is the sender (the vault)
             vault: to.toLowerCase(), // Vault here might represent the destination (L1 Bridge?)
             blockNumber: event.block.number.toString(),
-            timestamp: new Date(Number(event.block.timestamp) * 1000),
+            timestamp: BigInt(event.block.timestamp),
             transactionHash: event.transaction.hash,
         });
         // --- End Supabase Logging ---
@@ -236,7 +236,7 @@ ponder.on("USDC:Transfer", async (params: any) => {
             user: from, // Store original sender address
             vault: to, // Store original destination address
             blockNumber: event.block.number, // Pass BigInt directly
-            timestamp: event.block.timestamp, // Pass BigInt directly
+            timestamp: BigInt(event.block.timestamp), // Pass BigInt directly
             transactionHash: event.transaction.hash,
         });
         // --- End Ponder DB Insert ---

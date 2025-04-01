@@ -49,7 +49,7 @@ async function safeSupabaseInsert(table: string, data: any) {
 // Helper function to update vault entity
 async function updateVaultEntity(context: any, vaultAddress: string, event: any, eventType: string) {
   const existingVault = await context.db.find(vaultEntity, { id: vaultAddress });
-  const timestamp = new Date(Number(event.block.timestamp));
+  const timestamp = BigInt(event.block.timestamp);
   
   if (existingVault && existingVault.length > 0) {
     const vault = existingVault[0];
@@ -88,7 +88,7 @@ async function updateVaultEntity(context: any, vaultAddress: string, event: any,
 async function updateVaultUserEntity(context: any, vaultAddress: string, userAddress: string, event: any, eventType: string) {
   const userId = `${vaultAddress}-${userAddress}`;
   const existingUser = await context.db.find(vaultUserEntity, { id: userId });
-  const timestamp = new Date(Number(event.block.timestamp));
+  const timestamp = BigInt(event.block.timestamp);
   
   if (existingUser && existingUser.length > 0) {
     const user = existingUser[0];
@@ -111,7 +111,7 @@ async function updateVaultUserEntity(context: any, vaultAddress: string, userAdd
       depositCount: eventType === 'deposit' ? 1 : 0,
       withdrawCount: eventType === 'withdraw' ? 1 : 0,
       lastActionTimestamp: timestamp,
-      unlockTime: new Date(0), // No lock time for BoringVault
+      unlockTime: BigInt(0), // No lock time for BoringVault
       isActive: true,
     });
   }
@@ -125,7 +125,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
     if (!event.args) return;
 
     const { from, asset, amount, shares } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -145,7 +145,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       amount: amount ? amount.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -154,12 +154,12 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       id: eventId,
       txHash: event.transaction.hash,
       nonce: BigInt(event.transaction.nonce || 0),
-      timestamp: timestamp,
+      timestamp: Number(timestamp),
       receiver: safeUserAddress,
       depositAsset: asset.toLowerCase(),
       depositAmount: BigInt(amount || 0),
       shareAmount: BigInt(shares || 0),
-      depositTimestamp: timestamp,
+      depositTimestamp: Number(timestamp),
       shareLockPeriod: 0, // No lock period for BoringVault deposits
       refunded: false,
     });
@@ -172,7 +172,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -185,7 +185,7 @@ ponder.on("BoringVault:Enter", async (params: any) => {
       shares: BigInt(shares || 0),
       user: safeUserAddress,
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp),
+      timestamp: timestamp,
       transactionHash: event.transaction.hash,
     });
 
@@ -209,7 +209,7 @@ ponder.on("BoringVault:Exit", async (params: any) => {
     if (!event.args) return;
     
     const { user, token, amount, shares } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -229,7 +229,7 @@ ponder.on("BoringVault:Exit", async (params: any) => {
       amount: amount ? amount.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -241,7 +241,7 @@ ponder.on("BoringVault:Exit", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 
@@ -254,7 +254,7 @@ ponder.on("BoringVault:Exit", async (params: any) => {
       shares: BigInt(shares || 0),
       user: safeUserAddress,
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       transactionHash: event.transaction.hash,
     });
 
@@ -278,7 +278,7 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
     if (!event.args) return;
     
     const { from, to, value } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Skip transfers that are not related to user shares
@@ -307,7 +307,7 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
       amount: value ? value.toString() : "0",
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -319,7 +319,7 @@ ponder.on("BoringVault:Transfer", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: Number(event.log.logIndex),
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
 

@@ -47,7 +47,7 @@ export const vault = onchainTable("vault", (t) => ({
   totalAssets: t.bigint(),
   totalShares: t.bigint(),
   lastUpdatedBlock: t.bigint(),
-  lastUpdatedTimestamp: t.timestamp(),
+  lastUpdatedTimestamp: t.bigint(),
 }));
 
 export const vaultUser = onchainTable("vault_user", (t) => ({
@@ -55,7 +55,7 @@ export const vaultUser = onchainTable("vault_user", (t) => ({
   vaultAddress: t.text(),
   userAddress: t.text(),
   shares: t.bigint(),
-  unlockTime: t.timestamp(),
+  unlockTime: t.bigint(),
   lastUpdatedBlock: t.bigint(),
 }));
 
@@ -85,7 +85,7 @@ export const loan = onchainTable("loan", (t) => ({
   collateralAmount: t.bigint(),
   healthFactor: t.bigint(),
   lastUpdatedBlock: t.bigint(),
-  lastUpdatedTimestamp: t.timestamp(),
+  lastUpdatedTimestamp: t.bigint(),
 }));
 
 export const trove = onchainTable("trove", (t) => ({
@@ -97,7 +97,7 @@ export const trove = onchainTable("trove", (t) => ({
   status: t.integer(),
   interestRate: t.bigint(),
   lastUpdatedBlock: t.bigint(),
-  lastUpdatedTimestamp: t.timestamp(),
+  lastUpdatedTimestamp: t.bigint(),
 }));
 
 export const troveEvent = onchainTable("trove_event", (t) => ({
@@ -111,7 +111,7 @@ export const troveEvent = onchainTable("trove_event", (t) => ({
   fee: t.bigint(),
   blockNumber: t.bigint(),
   transactionHash: t.text(),
-  timestamp: t.timestamp(),
+  timestamp: t.bigint(),
 }));
 
 export const loanEvent = onchainTable("loan_event", (t) => ({
@@ -120,7 +120,7 @@ export const loanEvent = onchainTable("loan_event", (t) => ({
   eventType: t.text(), // 'borrow', 'repay', 'liquidation'
   amount: t.bigint(),
   blockNumber: t.bigint(),
-  timestamp: t.timestamp(),
+  timestamp: t.bigint(),
   transactionHash: t.text(),
   liquidatorAddress: t.text(),
 }));
@@ -143,10 +143,10 @@ export const hlp = onchainTable("hlp", (t) => ({
   id: t.text().primaryKey(),
   userAddress: t.text(),
   depositAmount: t.bigint(),
-  unlockTime: t.timestamp(),
+  unlockTime: t.bigint(),
   yieldAccrued: t.bigint(),
   lastUpdatedBlock: t.bigint(),
-  lastUpdatedTimestamp: t.timestamp(),
+  lastUpdatedTimestamp: t.bigint(),
 }));
 
 export const hyperliquidTransfer = onchainTable("hyperliquid_transfer", (t) => ({
@@ -185,7 +185,7 @@ export const rawEvent = onchainTable("raw_event", (t) => ({
   blockNumber: t.bigint(),
   logIndex: t.integer(),
   transactionHash: t.text(),
-  timestamp: t.timestamp(),
+  timestamp: t.bigint(),
   data: t.json(),
 }));
 
@@ -197,7 +197,7 @@ export const vaultEntity = onchainTable("vault_entity", (t) => ({
   depositCount: t.integer(),
   withdrawCount: t.integer(),
   userCount: t.integer(),
-  lastEventTimestamp: t.timestamp(),
+  lastEventTimestamp: t.bigint(),
   lastEventBlock: t.bigint(),
   lastEventType: t.text(), // 'deposit', 'withdraw', 'transfer'
   lastEventAmount: t.bigint(),
@@ -213,7 +213,7 @@ export const vaultEventEntity = onchainTable("vault_event_entity", (t) => ({
   shares: t.bigint(),
   user: t.text(),
   blockNumber: t.bigint(),
-  timestamp: t.timestamp(),
+  timestamp: t.bigint(),
   transactionHash: t.text(),
 }));
 
@@ -225,8 +225,8 @@ export const vaultUserEntity = onchainTable("vault_user_entity", (t) => ({
   shares: t.bigint(),
   depositCount: t.integer(),
   withdrawCount: t.integer(),
-  lastActionTimestamp: t.timestamp(),
-  unlockTime: t.timestamp(),
+  lastActionTimestamp: t.bigint(),
+  unlockTime: t.bigint(),
   isActive: t.boolean(),
 }));
 
@@ -239,7 +239,7 @@ export const loanEntity = onchainTable("loan_entity", (t) => ({
   collateralAmount: t.bigint(),
   healthFactor: t.real(),
   interestRate: t.bigint(),
-  lastEventTimestamp: t.timestamp(),
+  lastEventTimestamp: t.bigint(),
   lastEventBlock: t.bigint(),
   lastEventType: t.text(), // 'borrow', 'repay', 'liquidate'
   isActive: t.boolean(),
@@ -255,7 +255,7 @@ export const loanEventEntity = onchainTable("loan_event_entity", (t) => ({
   collateralChange: t.bigint(),
   healthFactorAfter: t.real(),
   blockNumber: t.bigint(),
-  timestamp: t.timestamp(),
+  timestamp: t.bigint(),
   transactionHash: t.text(),
   borrowerAddress: t.text(),
   troveId: t.text(),
@@ -268,7 +268,7 @@ export const vaultEquity = onchainTable("vault_equity", (t) => ({
   equity: t.bigint(),
   withdrawableAmount: t.bigint(),
   lastBlockNumber: t.bigint(),
-  lastTimestamp: t.timestamp(),
+  lastTimestamp: t.bigint(),
 }));
 
 // New table for storing vault spot balance from L1Read calls
@@ -280,7 +280,7 @@ export const vaultSpotBalance = onchainTable("vault_spot_balance", (t) => ({
   hold: t.bigint(),
   entryNtl: t.bigint(),
   lastBlockNumber: t.bigint(),
-  lastTimestamp: t.timestamp(),
+  lastTimestamp: t.bigint(),
 }));
 
 export const hlpVaultEvent = onchainTable("hlp_vault_event", (t) => ({

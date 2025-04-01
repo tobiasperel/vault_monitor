@@ -48,7 +48,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
     if (!event.args) return;
     
     const { receiver, depositAsset, depositAmount } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -70,7 +70,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
         data: {
           collateralAmount: BigInt(collateralAmount),
           lastUpdatedBlock: BigInt(blockNumber),
-          lastUpdatedTimestamp: new Date(timestamp * 1000),
+          lastUpdatedTimestamp: timestamp,
         },
       });
     } else {
@@ -81,7 +81,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
         collateralAmount: BigInt(collateralAmount),
         healthFactor: BigInt(100), // Safe health factor for collateral only
         lastUpdatedBlock: BigInt(blockNumber),
-        lastUpdatedTimestamp: new Date(timestamp * 1000),
+        lastUpdatedTimestamp: timestamp,
       });
     }
     
@@ -92,7 +92,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
       eventType: 'deposit',
       amount: BigInt(depositAmount),
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       transactionHash: event.transaction.hash,
       liquidatorAddress: '', // No liquidator for deposits
     });
@@ -107,7 +107,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
       asset: depositAsset.toLowerCase(),
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -134,7 +134,7 @@ ponder.on("Teller:Deposit", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: event.log.logIndex,
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
     console.log('Teller:Deposit event processed');
@@ -151,7 +151,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
     if (!event.args) return;
     
     const { receiver, asset, amount } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -170,7 +170,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
         data: {
           collateralAmount: existingLoan[0].collateralAmount + BigInt(amount),
           lastUpdatedBlock: BigInt(blockNumber),
-          lastUpdatedTimestamp: new Date(timestamp * 1000),
+          lastUpdatedTimestamp: timestamp,
         },
       });
     } else {
@@ -181,7 +181,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
         collateralAmount: BigInt(amount),
         healthFactor: BigInt(100), // Safe health factor for collateral only
         lastUpdatedBlock: BigInt(blockNumber),
-        lastUpdatedTimestamp: new Date(timestamp * 1000),
+        lastUpdatedTimestamp: timestamp,
       });
     }
     
@@ -192,7 +192,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
       eventType: 'bulk_deposit',
       amount: BigInt(amount),
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       transactionHash: event.transaction.hash,
       liquidatorAddress: '', // No liquidator for deposits
     });
@@ -207,7 +207,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
       asset: asset.toLowerCase(),
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -219,7 +219,7 @@ ponder.on("Teller:BulkDeposit", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: event.log.logIndex,
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
     console.log('Teller:BulkDeposit event processed');
@@ -236,7 +236,7 @@ ponder.on("Teller:BulkWithdraw", async (params: any) => {
     if (!event.args) return;
     
     const { receiver, asset, amount } = event.args;
-    const timestamp = Number(event.block.timestamp);
+    const timestamp = BigInt(event.block.timestamp);
     const blockNumber = Number(event.block.number);
     
     // Generate unique event ID
@@ -260,7 +260,7 @@ ponder.on("Teller:BulkWithdraw", async (params: any) => {
         data: {
           collateralAmount: newCollateral,
           lastUpdatedBlock: BigInt(blockNumber),
-          lastUpdatedTimestamp: new Date(timestamp * 1000),
+          lastUpdatedTimestamp: timestamp,
         },
       });
     }
@@ -272,7 +272,7 @@ ponder.on("Teller:BulkWithdraw", async (params: any) => {
       eventType: 'bulk_withdraw',
       amount: BigInt(amount),
       blockNumber: BigInt(blockNumber),
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       transactionHash: event.transaction.hash,
       liquidatorAddress: '', // No liquidator for withdrawals
     });
@@ -287,7 +287,7 @@ ponder.on("Teller:BulkWithdraw", async (params: any) => {
       asset: asset.toLowerCase(),
       block_number: blockNumber,
       transaction_hash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000).toISOString(),
+      timestamp: timestamp.toString(),
       payload: serializeEvent(event),
     });
     
@@ -299,7 +299,7 @@ ponder.on("Teller:BulkWithdraw", async (params: any) => {
       blockNumber: BigInt(blockNumber),
       logIndex: event.log.logIndex,
       transactionHash: event.transaction.hash,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: timestamp,
       data: serializeEvent(event),
     });
     console.log('Teller:BulkWithdraw event processed');

@@ -33,7 +33,7 @@ ponder.on("L1Read:block", async (args: any) => {
   const context = args.context as L1ReadUpdateContext; // Use our defined context type
 
   const blockNumber = block.number;
-  const timestamp = new Date(Number(block.timestamp) * 1000);
+  const timestamp = block.timestamp;
 
   console.log(`Running L1ReadUserDataUpdate interval handler at block ${blockNumber}`);
 
@@ -132,18 +132,22 @@ ponder.on("L1Read:block", async (args: any) => {
 
     // Create new ID for each entry based on vault and block number
     const vaultEquityId = `${vaultAddress.toLowerCase()}-${blockNumber}`;
+    
+    // Insert with raw timestamp as BigInt
     await context.db.insert(vaultEquity).values({
         id: vaultEquityId,
         vaultAddress: vaultAddress.toLowerCase(),
         equity: equity,
         withdrawableAmount: withdrawableAmount,
         lastBlockNumber: BigInt(blockNumber),
-        lastTimestamp: timestamp,
+        lastTimestamp: BigInt(timestamp), // Store as raw BigInt
       });
-      console.log(`Inserted vaultEquity history ${equity} for ${vaultAddress} at block ${blockNumber}`);
+    console.log(`Inserted vaultEquity history ${equity} for ${vaultAddress} at block ${blockNumber}`);
 
     // Create new ID for spot balance based on vault, token, and block number
     const spotBalanceId = `${vaultAddress.toLowerCase()}-${spotTokenId}-${blockNumber}`;
+    
+    // Insert with raw timestamp as BigInt
     await context.db.insert(vaultSpotBalance).values({
         id: spotBalanceId,
         vaultAddress: vaultAddress.toLowerCase(),
@@ -152,8 +156,9 @@ ponder.on("L1Read:block", async (args: any) => {
         hold: spotHold,
         entryNtl: spotEntryNtl,
         lastBlockNumber: BigInt(blockNumber),
-        lastTimestamp: timestamp,
+        lastTimestamp: BigInt(timestamp), // Store as raw BigInt
       });
+    console.log(`Inserted vaultSpotBalance history for ${vaultAddress}, token ${spotTokenId} at block ${blockNumber}`);
 
   } catch (error) {
     console.error(`Error fetching/storing equity for vault ${vaultAddress} at block ${blockNumber}:`, error);
