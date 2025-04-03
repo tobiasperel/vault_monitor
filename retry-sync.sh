@@ -4,7 +4,7 @@
 # pkill -f "ponder" || true
 
 # Initial starting block
-START_BLOCK=20000000  # Starting just after the failing range (19422983 to 19423033)
+START_BLOCK=20000001  # Starting just after the failing range (19422983 to 19423033)
 
 # Function to update .env.local with new start block
 update_env_file() {
@@ -12,13 +12,13 @@ update_env_file() {
   
   cat > .env.temp << EOL
 # Mainnet RPC URL used for fetching blockchain data
-PONDER_RPC_URL_1="http://34.133.15.250:3001/evm"
+PONDER_RPC_URL_1="http://69.62.71.230:3001/evm"
 
 # Postgres database URL for Ponder - pointing to Supabase PostgreSQL
 DATABASE_URL="postgresql://postgres:HjYeGV2Lyr9J4V3T@db.nctdcgedcpptlifinpky.supabase.co:5432/postgres?sslmode=require&pool_timeout=0"
 
 # Base chain RPC
-PONDER_RPC_URL_BASE="http://34.133.15.250:3001/evm"
+PONDER_RPC_URL_BASE="http://69.62.71.230:3001/evm"
 
 # Contract addresses
 BORING_VAULT_ADDRESS="0x208EeF7B7D1AcEa7ED4964d3C5b0c194aDf17412"
