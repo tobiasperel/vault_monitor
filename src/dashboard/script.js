@@ -1235,6 +1235,28 @@ function initDashboard() {
     if (themeToggleButton) {
       themeToggleButton.addEventListener('click', toggleTheme);
     }
+
+    // Initialize Bootstrap Tooltips
+    console.log('Attempting to initialize tooltips...');
+    // Defer initialization slightly to ensure bootstrap object is ready
+    setTimeout(() => {
+        try {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                // Ensure bootstrap object is available
+                if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip === 'function') {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                } else {
+                    console.error('Bootstrap Tooltip function not found. Check Bootstrap JS loading.');
+                    return null;
+                }
+            });
+            console.log(`Initialized ${tooltipList.filter(t => t !== null).length} tooltips successfully.`);
+        } catch (e) {
+            console.error('Error initializing tooltips:', e);
+        }
+    }, 100); // Small delay (100ms) just in case of timing issues
+
   }
 
   console.log('Loading dashboard data...');

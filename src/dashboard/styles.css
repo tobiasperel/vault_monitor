@@ -473,3 +473,25 @@ body[data-theme="dark"] #theme-icon-moon {
     font-size: 0.85em;
     opacity: 0.7;
 } 
+
+.tooltip {
+  z-index: 9999 !important; /* Ensure it's on top */
+  opacity: 1 !important; /* Ensure it's not transparent */
+  visibility: visible !important; /* Ensure it's not hidden */
+  display: block !important; /* Override potential display:none (might affect positioning slightly but good for testing) */
+  pointer-events: auto !important; /* Make sure it can be interacted with if needed */
+}
+
+/* Ensure inner content is visible - adjust colors for theme if needed */
+.tooltip .tooltip-inner {
+   opacity: 1 !important;
+   visibility: visible !important;
+   background-color: #f8f9fa; /* Light background */
+   color: #212529; /* Dark text */
+   border: 1px solid #dee2e6;
+}
+
+/* Adjust arrow color if needed */
+.tooltip .tooltip-arrow::before {
+    border-top-color: #f8f9fa !important; /* Match inner background */
+}

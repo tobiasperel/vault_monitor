@@ -122,14 +122,16 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>Vault Assets (BTC)</h5>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Total value of assets (BTC converted to USD) held in the main feBTC vault.">
+                      Vault Assets (BTC) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <div class="summary-value" id="summary-vault-assets">
                       <span class="value-primary">-</span><br>
                       <span class="value-secondary">(-)</span>
                     </div>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vaults">View Vault Details</a>
+                    <a class="small" href="#vaults">View Vault Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -138,14 +140,16 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>Loan Collateral (BTC)</h5>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Total value of BTC collateral locked for active feUSD loans.">
+                      Loan Collateral (BTC) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <div class="summary-value" id="summary-loan-collateral">
                       <span class="value-primary">-</span><br>
                       <span class="value-secondary">(-)</span>
                     </div>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <a class="small" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -154,11 +158,13 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card bg-danger text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Total Debt (feUSD)</h5>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Total outstanding feUSD debt across all active loans.">
+                      Total Debt (feUSD) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <h2 id="summary-total-debt">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <a class="small text-white" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -170,11 +176,13 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card bg-dark text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Avg Loan Rate (%)</h5>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Average annual interest rate (%) paid on outstanding feUSD loans.">
+                      Avg Loan Rate (%) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <h2 id="summary-avg-loan-rate">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <a class="small text-white" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -183,16 +191,16 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>HLP Deposits (USDC)</h5>
-                    <!-- Verify this block is EXACTLY like this -->
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Net USDC deposited into the HLP vault (Deposits - Withdrawals). Max withdrawable shown below.">
+                      HLP Deposits (USDC) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <div class="summary-value" id="summary-hlp-deposits">
                       <span class="value-primary">-</span><br>
                       <span class="value-secondary">(-)</span>
                     </div>
-                    <!-- End verification block -->
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#hlp">View HLP Details</a>
+                    <a class="small" href="#hlp">View HLP Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -201,11 +209,13 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card bg-warning text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>HLP Yield (%)</h5>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Current estimated annual yield (%) earned on HLP deposits.">
+                      HLP Yield (%) <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
                     <h2 id="summary-hlp-yield">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#hlp">View HLP Details</a>
+                    <a class="small text-white" href="#hlp">View HLP Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -214,11 +224,13 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card bg-dark text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Net Rate Revenue</h5>
-                    <h2 id="summary-net-revenue">TBD</h2>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Annualized HLP Yield (HLP Deposits * HLP APR)">
+                      Net Rate Revenue <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
+                    <h2 id="summary-net-revenue">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <a class="small" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -227,11 +239,13 @@
               <div class="col-xl-4 col-md-6">
                 <div class="card bg-dark text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Net Rate Profit</h5>
-                    <h2 id="summary-net-profit">TBD</h2>
+                    <h5 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" title="Annualized Revenue - Annualized Loan Cost (Total Debt * Avg Loan Rate)">
+                      Net Rate Profit <i class="bi bi-info-circle ms-1 small-info-icon"></i>
+                    </h5>
+                    <h2 id="summary-net-profit">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <a class="small" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
