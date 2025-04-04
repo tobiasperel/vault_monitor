@@ -1,5 +1,11 @@
 // Dashboard JavaScript
 
+// Global variables to store intermediate results for Net Rate calculation
+let currentNetHlpDeposits = null;
+let currentHlpApr = null;
+let currentTotalDebt = null;
+let currentAvgLoanRate = null;
+
 // Check if we're in a browser environment
 const isBrowser = typeof document !== 'undefined';
 let historicalVaultEvents = [];
@@ -27,6 +33,35 @@ function formatTimestamp(timestamp) {
 function formatEth(wei) {
   if (!wei) return "0";
   return (Number(wei) / 1e18).toFixed(4);
+}
+
+// Function to reset all summary card values to a loading state
+function resetSummaryCardsToLoading() {
+    if (!isBrowser) return;
+
+    const cardSelectors = {
+        '#summary-vault-assets .value-primary': '...', 
+        '#summary-vault-assets .value-secondary': '(...)',
+        '#summary-loan-collateral .value-primary': '...',
+        '#summary-loan-collateral .value-secondary': '(...)',
+        '#summary-total-debt': '...',
+        '#summary-avg-loan-rate': '...',
+        '#summary-hlp-deposits .value-primary': '...',
+        '#summary-hlp-deposits .value-secondary': '(...)', // Consistent loading state
+        '#summary-hlp-yield': '...',
+        '#summary-net-revenue': '...', // Set net rate cards too
+        '#summary-net-profit': '...'
+    };
+
+    console.log("[UI Reset] Setting summary cards to loading state...");
+    for (const selector in cardSelectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.textContent = cardSelectors[selector];
+        } else {
+            console.warn(`[UI Reset] Element not found for selector: ${selector}`);
+        }
+    }
 }
 
 // API Functions
@@ -236,10 +271,6 @@ async function loadHlpYieldAndPnl() {
   const depositsElement = document.getElementById('summary-hlp-deposits');
   const valueSecondaryElement = depositsElement ? depositsElement.querySelector('.value-secondary') : null;
 
-  // Reset states
-  if (yieldElement) yieldElement.textContent = "...";
-  if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: ...)";
-
   // --- Fetch Latest Snapshot from Ponder DB --- 
   console.log(`[GraphQL] Fetching latest HLP snapshot for ${hlpVaultAddress}...`);
   try {
@@ -269,10 +300,13 @@ async function loadHlpYieldAndPnl() {
         if (yieldElement) {
             const apr = latestSnapshot.apr ? parseFloat(latestSnapshot.apr) : null;
             if (apr !== null && !isNaN(apr)) {
+                currentHlpApr = apr; // Store the decimal APR
+                console.log(`[NetRateCalc] Stored hlpApr: ${currentHlpApr}`);
                 yieldElement.textContent = formatNumber(apr * 100, 2);
             } else {
+                currentHlpApr = null; // Ensure it's null if invalid
                 console.warn('[DB DATA WARNING] Invalid APR data in snapshot');
-                yieldElement.textContent = "N/A";
+                yieldElement.textContent = "...";
             }
         }
         if (valueSecondaryElement) {
@@ -281,19 +315,55 @@ async function loadHlpYieldAndPnl() {
                 valueSecondaryElement.textContent = `(Withdrawable: ${formatNumber(maxW, 2)})`;
             } else {
                  console.warn('[DB DATA WARNING] Invalid maxWithdrawable data in snapshot');
-                 valueSecondaryElement.textContent = "(Withdrawable: N/A)";
+                 valueSecondaryElement.textContent = "(...)";
             }
         }
     } else {
         console.error('[GraphQL ERROR] No HLP Snapshots found in Ponder DB for address:', hlpVaultAddress);
-        if (yieldElement) yieldElement.textContent = "N/A";
-        if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: N/A)";
+        if (yieldElement) yieldElement.textContent = "...";
+        if (valueSecondaryElement) valueSecondaryElement.textContent = "(...)";
+        currentHlpApr = null; // Reset APR if snapshot fails
     }
   } catch (error) {
      console.error('[GraphQL CATCH ERROR] Error fetching HLP snapshot from Ponder DB:', error);
-     if (yieldElement) yieldElement.textContent = "Error";
-     if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: Error)";
+     if (yieldElement) yieldElement.textContent = "...";
+     if (valueSecondaryElement) valueSecondaryElement.textContent = "(...)";
+     currentHlpApr = null; // Reset APR on hard error
   }
+}
+
+// New function to calculate and display Net Rates
+function calculateAndDisplayNetRates() {
+    const revenueElement = document.getElementById('summary-net-revenue');
+    const profitElement = document.getElementById('summary-net-profit');
+
+    console.log("[NetRateCalc] Attempting calculation with:", 
+        { deposits: currentNetHlpDeposits, apr: currentHlpApr, debt: currentTotalDebt, loanRate: currentAvgLoanRate });
+
+    // Check if all required data points are available and valid numbers
+    if (currentNetHlpDeposits !== null && typeof currentNetHlpDeposits === 'number' &&
+        currentHlpApr !== null && typeof currentHlpApr === 'number' &&
+        currentTotalDebt !== null && typeof currentTotalDebt === 'number' && currentTotalDebt > 0 && // Debt needs conversion
+        currentAvgLoanRate !== null && typeof currentAvgLoanRate === 'number') 
+    { 
+        // Convert totalDebt from wei-like format (1e18) to standard number
+        const totalDebtNumber = Number(currentTotalDebt) / 1e18;
+
+        // Calculate annualized numbers
+        const annualizedRevenue = currentNetHlpDeposits * currentHlpApr;
+        const annualizedCost = totalDebtNumber * (currentAvgLoanRate / 100); // Loan rate is already %
+        const annualizedProfit = annualizedRevenue - annualizedCost;
+
+        console.log("[NetRateCalc] Calculated Values:", 
+            { revenue: annualizedRevenue, cost: annualizedCost, profit: annualizedProfit });
+
+        // Update UI elements
+        if (revenueElement) revenueElement.textContent = formatNumber(annualizedRevenue, 2);
+        if (profitElement) profitElement.textContent = formatNumber(annualizedProfit, 2);
+
+    } else {
+        console.warn("[NetRateCalc] Skipping calculation - one or more data points missing or invalid.");
+    }
 }
 
 // Load dashboard data
@@ -303,7 +373,10 @@ async function loadDashboardData() {
     clearErrorMessages();
     
     if (isBrowser) {
-      // Update loading state
+      // Reset cards to loading state FIRST
+      resetSummaryCardsToLoading();
+
+      // Update loading state for tables (keep this)
       document.querySelectorAll('tbody').forEach(tbody => {
         if (tbody.children.length === 0 || 
             (tbody.children.length === 1 && tbody.children[0].textContent.includes('No data'))) {
@@ -316,12 +389,15 @@ async function loadDashboardData() {
         loadVaults(),
         loadVaultEvents(),
         loadVaultUsers(),
-        loadLoans(),
+        loadLoans(), // Populates currentTotalDebt, currentAvgLoanRate
         loadLoanEvents(),
         loadL1Data(),
-        loadHlpTransactions(),
-        loadHlpYieldAndPnl()
+        loadHlpTransactions(), // Populates currentNetHlpDeposits
+        loadHlpYieldAndPnl() // Populates currentHlpApr
       ]);
+      
+      // Calculate and display net rates AFTER all data is loaded
+      calculateAndDisplayNetRates();
       
       // Create charts
       createVaultActivityChart();
@@ -566,6 +642,11 @@ async function loadLoans() {
 
     const totalInterestRateSum = loans.reduce((sum, loan) => sum + Number(loan.interestRate || 0), 0);
     const avgInterestRate = loans.length > 0 ? (totalInterestRateSum / loans.length / 1e16) : 0;
+
+    // Store for Net Rate calculation
+    currentTotalDebt = totalDebt; 
+    currentAvgLoanRate = avgInterestRate;
+    console.log(`[NetRateCalc] Stored totalDebt: ${currentTotalDebt}, avgLoanRate: ${currentAvgLoanRate}`);
 
     // Update stacked display in summary card
     const loanCollateralElement = document.getElementById('summary-loan-collateral');
@@ -930,6 +1011,10 @@ async function loadHlpTransactions() {
           return sum;
       }, 0);
   }
+
+  // Store for Net Rate calculation
+  currentNetHlpDeposits = netDeposits;
+  console.log(`[NetRateCalc] Stored netHlpDeposits: ${currentNetHlpDeposits}`);
 
   // Update Primary Value of HLP Deposits Card
   if (depositsElement) {
