@@ -5,7 +5,6 @@
 
 # Initial starting block
 START_BLOCK=20000001  # Starting just after the failing range (19422983 to 19423033)
-END_BLOCK=20460297
 
 # Function to update .env.local with new start block
 update_env_file() {
@@ -143,35 +142,30 @@ export default createConfig({
       abi: ensureAbiArray(BoringVaultAbi),
       address: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('BORING_VAULT_START_BLOCK'),
-      endBlock: $END_BLOCK,
     },
     Teller: {
       network: "hyperliquid",
       abi: ensureAbiArray(TellerAbi),
       address: process.env.TELLER_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('TELLER_START_BLOCK'),
-      endBlock: $END_BLOCK,
     },
     TroveManager: {
       network: "hyperliquid",
       abi: ensureAbiArray(TroveManagerAbi),
       address: process.env.TROVE_MANAGER_ADDRESS as \`0x\${string}\`,
-      startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'), 
-      endBlock: $END_BLOCK,
+      startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'),
     },
     AddRemoveManagers: {
       network: "hyperliquid",
       abi: ensureAbiArray(AddRemoveManagersAbi),
       address: process.env.BORROWER_OPERATIONS_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('BORROWER_OPERATIONS_START_BLOCK'),
-      endBlock: $END_BLOCK,
     },
     HLP: {
       network: "hyperliquid",
       abi: ensureAbiArray(L1WriteAbi),
       address: process.env.L1WRITE_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('L1WRITE_START_BLOCK'),
-      endBlock: $END_BLOCK,
       filter: [{
         event: 'VaultTransfer',
         args: {
@@ -197,7 +191,6 @@ export default createConfig({
       abi: ensureAbiArray(ERC20Abi),
       address: process.env.USDC_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      endBlock: $END_BLOCK,
       filter: [{
         event: 'Transfer',
         args: {
@@ -211,7 +204,6 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      endBlock: $END_BLOCK,
       interval: 10000
     },
   },
@@ -220,7 +212,6 @@ export default createConfig({
       network: "hyperliquid",
       address: process.env.BORING_VAULT_ADDRESS as \`0x\${string}\`,
       startBlock: getStartBlock('BORING_VAULT_START_BLOCK'),
-      endBlock: $END_BLOCK,
     },
   },
   database: {
