@@ -23,18 +23,20 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "axios": "^1.8.4",
+    "cors": "^2.8.5",
     "cron": "^3.5.0",
     "dotenv": "^16.4.7",
+    "express": "^4.18.2",
     "hono": "^4.5.0",
+    "node-fetch": "2",
     "ponder": "0.10.3",
     "tsx": "^4.19.3",
-    "viem": "^2.21.3",
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "viem": "^2.21.3"
   },
   "devDependencies": {
     "@types/cron": "^2.4.3",
     "@types/node": "^20.9.0",
+    "@types/node-fetch": "^2.6.12",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.10.4",
     "typescript": "^5.2.2"

@@ -293,3 +293,15 @@ export const hlpVaultEvent = onchainTable("hlp_vault_event", (t) => ({
   timestamp: t.bigint(),
   transactionHash: t.text(),
 }));
+
+// Table for storing historical snapshots of HLP data
+export const hlpSnapshot = onchainTable("hlpSnapshot", (t) => ({
+  id: t.text().primaryKey(), // vaultAddress-blockNumber
+  vaultAddress: t.text(),
+  blockNumber: t.bigint(),
+  timestamp: t.bigint(),
+  apr: t.text(), // Store as text, allow null
+  maxWithdrawable: t.text(), // Store as text, allow null
+  latestPnl: t.text(), // Store as text, allow null
+  latestAccountValue: t.text(), // Store as text, allow null
+}));

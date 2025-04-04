@@ -30,11 +30,50 @@ function formatEth(wei) {
 }
 
 // API Functions
+
+// Fetch current BTC price from OUR backend proxy
+let btcPriceCache = { price: null, timestamp: 0 }; // Keep frontend cache simple
+async function getBtcPrice() {
+  const now = Date.now();
+  // Use frontend cache first (short duration, backend handles main caching/rate limiting)
+  if (btcPriceCache.price !== null && (now - btcPriceCache.timestamp < 10000)) { // e.g., 10 second frontend cache
+    console.log('[FRONTEND CACHE] Using cached BTC price:', btcPriceCache.price);
+    return btcPriceCache.price;
+  }
+
+  console.log('[FRONTEND API] Attempting to fetch BTC price from proxy /btc-price ...');
+  try {
+    // Fetch from your own backend proxy endpoint
+    const response = await fetch('/btc-price'); // Relative path to our server endpoint
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({})); // Try to parse error
+      console.error(`[FRONTEND API ERROR] Proxy response not OK: ${response.status} ${response.statusText}. Error: ${errorData.error || 'Unknown'}`);
+      return null; // Indicate error to callers
+    }
+
+    const data = await response.json();
+
+    if (data && typeof data.price === 'number') {
+      const price = data.price;
+      console.log('[FRONTEND API SUCCESS] Fetched BTC price via proxy:', price);
+      btcPriceCache = { price: price, timestamp: now }; // Update frontend cache
+      return price;
+    } else {
+      console.error('[FRONTEND API ERROR] Invalid data structure received from proxy:', data);
+      return null; // Indicate error to callers
+    }
+  } catch (error) {
+    console.error('[FRONTEND CATCH ERROR] Error fetching BTC price from proxy:', error);
+    return null; // Indicate error to callers
+  }
+}
+
 async function fetchData(query) {
   try {
     console.log('Attempting to fetch from GraphQL endpoint... Query:', query.trim().substring(0, 100) + '...');
     
-    const response = await fetch('https://741fcced07c8.ngrok.app/graphql', {
+    const response = await fetch('https://066c76113133.ngrok.app/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -190,6 +229,73 @@ function updateRiskMetrics(loans = []) {
   }
 }
 
+// Function to load LATEST HLP Snapshot Data from Ponder DB
+async function loadHlpYieldAndPnl() {
+  const hlpVaultAddress = "0xa15099a30bbf2e68942d6f4c43d70d04faeab0a0"; // Testnet address
+  const yieldElement = document.getElementById('summary-hlp-yield');
+  const depositsElement = document.getElementById('summary-hlp-deposits');
+  const valueSecondaryElement = depositsElement ? depositsElement.querySelector('.value-secondary') : null;
+
+  // Reset states
+  if (yieldElement) yieldElement.textContent = "...";
+  if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: ...)";
+
+  // --- Fetch Latest Snapshot from Ponder DB --- 
+  console.log(`[GraphQL] Fetching latest HLP snapshot for ${hlpVaultAddress}...`);
+  try {
+    const query = `
+      query {
+        hlpSnapshots(
+          where: { vaultAddress: "${hlpVaultAddress.toLowerCase()}" },
+          orderBy: "timestamp",
+          orderDirection: "desc",
+          limit: 1 
+        ) {
+          items {
+            apr
+            maxWithdrawable
+            timestamp 
+          }
+        }
+      }
+    `;
+    const gqlData = await fetchData(query);
+
+    if (gqlData && gqlData.hlpSnapshots && gqlData.hlpSnapshots.items && gqlData.hlpSnapshots.items.length > 0) {
+        const latestSnapshot = gqlData.hlpSnapshots.items[0];
+        console.log('[GraphQL SUCCESS] Received Latest HLP Snapshot from DB:', latestSnapshot);
+
+        // Update cards using snapshot data
+        if (yieldElement) {
+            const apr = latestSnapshot.apr ? parseFloat(latestSnapshot.apr) : null;
+            if (apr !== null && !isNaN(apr)) {
+                yieldElement.textContent = formatNumber(apr * 100, 2);
+            } else {
+                console.warn('[DB DATA WARNING] Invalid APR data in snapshot');
+                yieldElement.textContent = "N/A";
+            }
+        }
+        if (valueSecondaryElement) {
+            const maxW = latestSnapshot.maxWithdrawable ? parseFloat(latestSnapshot.maxWithdrawable) : null;
+            if (maxW !== null && !isNaN(maxW)) {
+                valueSecondaryElement.textContent = `(Withdrawable: ${formatNumber(maxW, 2)})`;
+            } else {
+                 console.warn('[DB DATA WARNING] Invalid maxWithdrawable data in snapshot');
+                 valueSecondaryElement.textContent = "(Withdrawable: N/A)";
+            }
+        }
+    } else {
+        console.error('[GraphQL ERROR] No HLP Snapshots found in Ponder DB for address:', hlpVaultAddress);
+        if (yieldElement) yieldElement.textContent = "N/A";
+        if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: N/A)";
+    }
+  } catch (error) {
+     console.error('[GraphQL CATCH ERROR] Error fetching HLP snapshot from Ponder DB:', error);
+     if (yieldElement) yieldElement.textContent = "Error";
+     if (valueSecondaryElement) valueSecondaryElement.textContent = "(Withdrawable: Error)";
+  }
+}
+
 // Load dashboard data
 async function loadDashboardData() {
   try {
@@ -213,7 +319,8 @@ async function loadDashboardData() {
         loadLoans(),
         loadLoanEvents(),
         loadL1Data(),
-        loadHlpTransactions()
+        loadHlpTransactions(),
+        loadHlpYieldAndPnl()
       ]);
       
       // Create charts
@@ -260,35 +367,51 @@ async function loadVaults() {
     return;
   }
   
-  vaultsTable.innerHTML = '';
-  
-  vaults.forEach(vault => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${formatAddress(vault.id)}</td>
-      <td>${formatEth(vault.totalAssets)}</td>
-      <td>${Number(vault.totalShares / 1e27).toFixed(0)}</td>
-      <td>${vault.depositCount}</td>
-      <td>${vault.withdrawCount}</td>
-      <td>${vault.userCount}</td>
-      <td>${formatTimestamp(vault.lastEventTimestamp)}</td>
-    `;
-    vaultsTable.appendChild(row);
-  });
-  
-  // Update summary cards
+  console.log('[loadVaults] Attempting to get BTC price...');
+  const btcPrice = await getBtcPrice();
+  console.log('[loadVaults] Received BTC price:', btcPrice, '(Type:', typeof btcPrice, ')');
+
   if (vaults.length > 0) {
-    document.getElementById('total-assets').textContent = formatEth(vaults[0].totalAssets);
-    document.getElementById('total-shares').textContent = Number(vaults[0].totalShares / 1e27).toFixed(0);
-    document.getElementById('active-users').textContent = vaults[0].userCount;
-    // Update risk score or other metrics if available
-    document.getElementById('risk-score').textContent = "Low";  // Placeholder
-    
-    // Update outstanding debt in summary card
-    const outstandingDebtElement = document.getElementById('outstanding-debt');
-    if (outstandingDebtElement) {
-      outstandingDebtElement.textContent = "0"; // Will be updated by loadLoans
+    const totalAssetsWei = vaults[0].totalAssets;
+    const totalAssetsBtc = Number(totalAssetsWei) / 1e18;
+    let totalAssetsUsd = '?'; // Default to ?
+    if (typeof btcPrice === 'number') { // Check if price is valid number
+        totalAssetsUsd = formatNumber(totalAssetsBtc * btcPrice, 0);
+    } else {
+        console.warn('[loadVaults] Invalid btcPrice for summary card calculation.');
     }
+
+    // Update stacked display in summary card
+    const vaultAssetsElement = document.getElementById('summary-vault-assets');
+    if (vaultAssetsElement) {
+        vaultAssetsElement.querySelector('.value-primary').textContent = `$${totalAssetsUsd}`;
+        vaultAssetsElement.querySelector('.value-secondary').textContent = `(${formatNumber(totalAssetsBtc, 4)} BTC)`;
+    }
+
+    // Update table display (USD value + BTC in smaller font below)
+    vaultsTable.innerHTML = '';
+    vaults.forEach(vault => {
+      const assetsBtc = Number(vault.totalAssets) / 1e18;
+      let assetsUsd = '?'; // Default to ?
+       if (typeof btcPrice === 'number') { // Check if price is valid number
+           assetsUsd = formatNumber(assetsBtc * btcPrice, 0);
+       } else {
+           console.warn('[loadVaults] Invalid btcPrice for table row calculation.');
+       }
+      const sharesFeBTC = Number(vault.totalShares / 1e27).toFixed(0);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${formatAddress(vault.id)}</td>
+        <td>$${assetsUsd}<span class="btc-value">(${formatNumber(assetsBtc, 4)} BTC)</span></td>
+        <td>${sharesFeBTC}</td>
+        <td>${vault.depositCount}</td>
+        <td>${vault.withdrawCount}</td>
+        <td>${vault.userCount}</td>
+        <td>${formatTimestamp(vault.lastEventTimestamp)}</td>
+      `;
+      vaultsTable.appendChild(row);
+    });
   }
 }
 
@@ -419,36 +542,66 @@ async function loadLoans() {
   
   if (!loansTable) return;
   
+  console.log('[loadLoans] Received loans array from API:', JSON.stringify(loans, null, 2));
+
   if (loans.length === 0) {
     loansTable.innerHTML = '<tr><td colspan="7" class="text-center">No loans found</td></tr>';
     return;
   }
   
-  loansTable.innerHTML = '';
-  
-  loans.forEach(loan => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${formatAddress(loan.troveId)}</td>
-      <td>${formatEth(loan.outstandingDebt)}</td>
-      <td>${formatEth(loan.collateralAmount)}</td>
-      <td>${formatNumber(loan.healthFactor)}</td>
-      <td>${formatNumber(loan.interestRate / 1e16)}%</td>
-      <td>${loan.isActive ? 'Active' : 'Closed'}</td>
-      <td>${formatTimestamp(loan.lastEventTimestamp)}</td>
-    `;
-    loansTable.appendChild(row);
-  });
-  
-  // Update outstanding debt in summary card
+  console.log('[loadLoans] Attempting to get BTC price...');
+  const btcPrice = await getBtcPrice();
+  console.log('[loadLoans] Received BTC price:', btcPrice, '(Type:', typeof btcPrice, ')');
+
   if (loans.length > 0) {
     const totalDebt = loans.reduce((sum, loan) => sum + Number(loan.outstandingDebt || 0), 0);
-    const outstandingDebtElement = document.getElementById('outstanding-debt');
-    if (outstandingDebtElement) {
-      outstandingDebtElement.textContent = formatEth(totalDebt.toString());
+    const totalCollateralWei = loans.reduce((sum, loan) => sum + Number(loan.collateralAmount || 0), 0);
+    const totalCollateralBtc = Number(totalCollateralWei) / 1e18;
+    let totalCollateralUsd = '?'; // Default to ?
+    if (typeof btcPrice === 'number') { // Check if price is valid number
+        totalCollateralUsd = formatNumber(totalCollateralBtc * btcPrice, 0);
+    } else {
+        console.warn('[loadLoans] Invalid btcPrice for summary card calculation.');
     }
-    
-    // Update risk metrics
+
+    const totalInterestRateSum = loans.reduce((sum, loan) => sum + Number(loan.interestRate || 0), 0);
+    const avgInterestRate = loans.length > 0 ? (totalInterestRateSum / loans.length / 1e16) : 0;
+
+    // Update stacked display in summary card
+    const loanCollateralElement = document.getElementById('summary-loan-collateral');
+    if (loanCollateralElement) {
+        loanCollateralElement.querySelector('.value-primary').textContent = `$${totalCollateralUsd}`;
+        loanCollateralElement.querySelector('.value-secondary').textContent = `(${formatNumber(totalCollateralBtc, 4)} BTC)`;
+    }
+    document.getElementById('summary-total-debt').textContent = formatEth(totalDebt.toString());
+    document.getElementById('summary-avg-loan-rate').textContent = formatNumber(avgInterestRate, 2);
+
+    // Update table display (USD value + BTC in smaller font below)
+    loansTable.innerHTML = '';
+    loans.forEach(loan => {
+      const collateralBtc = Number(loan.collateralAmount) / 1e18;
+      let collateralUsd = '?'; // Default to ?
+      if (typeof btcPrice === 'number') { // Check if price is valid number
+          collateralUsd = formatNumber(collateralBtc * btcPrice, 0);
+      } else {
+          console.warn('[loadLoans] Invalid btcPrice for table row calculation.');
+      }
+      const debtFeUSD = formatEth(loan.outstandingDebt);
+      const interestRatePercent = formatNumber(loan.interestRate / 1e16);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${formatAddress(loan.troveId)}</td>
+        <td>${debtFeUSD}</td>
+        <td>$${collateralUsd}<span class="btc-value">(${formatNumber(collateralBtc, 4)} BTC)</span></td>
+        <td>${formatNumber(loan.healthFactor)}</td>
+        <td>${interestRatePercent}%</td>
+        <td>${loan.isActive ? 'Active' : 'Closed'}</td>
+        <td>${formatTimestamp(loan.lastEventTimestamp)}</td>
+      `;
+      loansTable.appendChild(row);
+    });
+
     updateRiskMetrics(loans);
   }
 }
@@ -531,9 +684,6 @@ async function loadL1Data() {
 
   const vaultEquitys = data.vaultEquitys?.items || [];
   const vaultSpotBalances = data.vaultSpotBalances?.items || [];
-
-  document.getElementById('hlp-equity').textContent = Number(vaultEquitys[vaultEquitys.length - 1].equity / 1e6).toFixed(2);
-  document.getElementById('hlp-spot-balance').textContent = Number(vaultSpotBalances[vaultSpotBalances.length - 1].total / 1e8).toFixed(2);
 
   let uniqueEquityHistoryForChart = [];
   if (vaultEquitys.length > 0) { // Use vaultEquitys
@@ -727,6 +877,7 @@ async function loadHlpTransactions() {
 
   const events = data.hlpVaultEvents?.items || [];
   const eventsTable = document.getElementById('hlp-events-table');
+  const depositsElement = document.getElementById('summary-hlp-deposits');
 
   if (!eventsTable) return;
 
@@ -765,6 +916,36 @@ async function loadHlpTransactions() {
       hlpActivity.appendChild(row);
     }
   });
+
+  // Calculate Net Deposits
+  let netDeposits = 0;
+  if (events.length > 0) {
+      netDeposits = events.reduce((sum, event) => {
+          const amount = Number(event.amount) / 1e6; // Assume USDC with 6 decimals
+          if (event.eventType === 'l1-deposit') {
+              return sum + amount;
+          } else if (event.eventType === 'l1-withdraw') {
+              return sum - amount;
+          }
+          return sum;
+      }, 0);
+  }
+
+  // Update Primary Value of HLP Deposits Card
+  if (depositsElement) {
+    console.log('[loadHlpTransactions] Found depositsElement:', depositsElement);
+    const primarySpan = depositsElement.querySelector('.value-primary');
+    console.log('[loadHlpTransactions] Found primarySpan:', primarySpan);
+
+    if (primarySpan) {
+        primarySpan.textContent = formatNumber(netDeposits, 2);
+    } else {
+        console.error('[loadHlpTransactions] CRITICAL: QuerySelector could not find .value-primary inside:', depositsElement.outerHTML);
+    }
+    // Secondary value will be updated by loadHlpYieldAndPnl
+  } else {
+    console.warn('Could not find HLP Deposits card element #summary-hlp-deposits to update primary value.');
+  }
 }
 
 // Chart creation

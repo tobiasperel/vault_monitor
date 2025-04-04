@@ -3,7 +3,7 @@
 // @ts-ignore - ignore missing type declarations
 import { ponder } from "ponder:registry";
 // @ts-ignore - ignore missing type declarations
-import { hyperliquidTransfer, vaultEquity, vaultSpotBalance } from "../../ponder.schema"; // Import schemas
+import { hyperliquidTransfer, vaultEquity, vaultSpotBalance, hlpSnapshot } from "../../ponder.schema"; // Import schemas
 // Import the ABI
 import fs from "fs";
 const L1ReadAbi = JSON.parse(fs.readFileSync("./abis/L1Read.json", "utf8"));
@@ -11,6 +11,8 @@ const L1ReadAbi = JSON.parse(fs.readFileSync("./abis/L1Read.json", "utf8"));
 import { encodeAbiParameters, decodeAbiParameters, parseAbiParameters, Hex } from 'viem';
 // Import Drizzle functions for filtering
 import { eq, and } from 'drizzle-orm';
+import fetch from 'node-fetch'; // Import fetch for API call
+import 'dotenv/config'; // Ensure env vars are loaded
 
 // Define the type for your context if needed (Ponder might infer this)
 interface L1ReadUpdateContext {
@@ -22,6 +24,48 @@ interface L1ReadUpdateContext {
     //    }
   };
   network: { name: string; chainId: number; };
+}
+
+// Function to fetch HLP details and return data object
+async function fetchHlpData(hlpVaultAddress: string, userAddress: string | undefined): Promise<any | null> {
+  console.log(`[HLP Fetch] Attempting to fetch HLP details for ${hlpVaultAddress}`);
+  try {
+    const requestBody: { type: string; vaultAddress: string; user?: string } = {
+      type: "vaultDetails",
+      vaultAddress: hlpVaultAddress,
+    };
+    if (userAddress) {
+      requestBody.user = userAddress;
+    }
+
+    const response = await fetch('https://api-ui.hyperliquid-testnet.xyz/info', { // Use testnet API
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    const responseBody = await response.text();
+
+    if (!response.ok) {
+        console.error(`[HLP Fetch Error] API Error ${response.status}: ${responseBody}`);
+        return null; // Return null on error
+    }
+
+    const data = JSON.parse(responseBody);
+
+    if (data && typeof data.apr === 'number' && typeof data.maxWithdrawable === 'number' && data.portfolio?.[3]?.[1]?.pnlHistory && data.portfolio?.[3]?.[1]?.accountValueHistory) {
+         console.log(`[HLP Fetch Success] Got data for ${hlpVaultAddress}`);
+         return data; // Return the full data object on success
+    } else {
+        console.error('[HLP Fetch Error] Invalid or incomplete data structure from API:', data);
+        return null; // Return null if data is invalid
+    }
+  } catch (error) {
+      console.error('[HLP Fetch Error] Network/Fetch error:', error);
+      return null; // Return null on fetch error
+  }
 }
 
 // Use a more general type for the args to satisfy the ponder.on signature,
@@ -163,5 +207,46 @@ ponder.on("L1Read:block", async (args: any) => {
   } catch (error) {
     console.error(`Error fetching/storing equity for vault ${vaultAddress} at block ${blockNumber}:`, error);
   }
+
+  // --- Fetch HLP Data --- 
+  let hlpData: any | null = null;
+  if (hlpVaultAddress) {
+      hlpData = await fetchHlpData(hlpVaultAddress, vaultAddress);
+  } else {
+      console.warn("HLP_VAULT_ADDRESS not set, skipping HLP detail fetch.");
+  }
+
+  // --- Store HLP Snapshot --- 
+  if (hlpVaultAddress && hlpData) { // Only store if fetch was successful
+      try {
+          const snapshotId = `${hlpVaultAddress.toLowerCase()}-${blockNumber}`;
+          const pnlHistory = hlpData.portfolio[3][1].pnlHistory;
+          const accountValueHistory = hlpData.portfolio[3][1].accountValueHistory;
+          const latestPnl = pnlHistory && pnlHistory.length > 0 ? pnlHistory[pnlHistory.length - 1][1].toString() : null;
+          const latestAccountValue = accountValueHistory && accountValueHistory.length > 0 ? accountValueHistory[accountValueHistory.length - 1][1].toString() : null;
+
+          await context.db.insert(hlpSnapshot).values({
+              id: snapshotId,
+              vaultAddress: hlpVaultAddress.toLowerCase(),
+              blockNumber: BigInt(blockNumber),
+              timestamp: BigInt(timestamp),
+              apr: hlpData.apr?.toString() ?? null, // Store as string or null
+              maxWithdrawable: hlpData.maxWithdrawable?.toString() ?? null, // Store as string or null
+              latestPnl: latestPnl,
+              latestAccountValue: latestAccountValue,
+          });
+          console.log(`[HLP DB] Inserted HLP snapshot ${snapshotId}`);
+      } catch (error: any) {
+          // Handle potential duplicate key errors if block handler reruns?
+          if (error?.message?.includes('duplicate key')) {
+             console.warn(`[HLP DB] Duplicate snapshot key ${hlpVaultAddress.toLowerCase()}-${blockNumber}, skipping insert.`);
+          } else {
+             console.error('[HLP DB Error] Error inserting HLP snapshot:', error);
+          }
+      }
+  } else if (hlpVaultAddress) {
+      console.warn(`[HLP DB] Skipping snapshot insert because HLP data fetch failed for ${hlpVaultAddress}`);
+  }
+
   console.log(`Finished L1Read interval handler for block ${blockNumber}`);
 }); 

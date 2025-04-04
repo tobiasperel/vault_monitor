@@ -49,15 +49,18 @@ async function safeSupabaseInsert(table: string, data: any) {
 }
 
 // Helper function to update loan entity
-async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddress: string, event: any, eventType: string) {
-  // Skip if borrower address is empty
-  if (!borrowerAddress) {
-    console.log('Skipping loan entity update - no borrower address');
+// Removed vaultAddress and borrowerAddress as params, get from event if needed
+async function updateLoanEntity(context: any, event: any, eventType: string) {
+  // Get key identifiers from the event
+  const troveIdString = event.args._troveId.toString();
+  const vaultAddress = event.log.address.toLowerCase();
+  const borrowerAddress = event.transaction.from; // Assuming tx sender is borrower
+
+  // Skip if troveId or borrower address is empty
+  if (!troveIdString || !borrowerAddress) {
+    console.log('Skipping loan entity update - missing troveId or borrower address');
     return;
   }
-
-  const loanId = `${vaultAddress}-${borrowerAddress}`;
-  // console.log(`Processing loan entity ${loanId} for event type ${eventType}`);
 
   const updateData = {
     outstandingDebt: BigInt(event.args._debt || event.args._debtChangeFromOperation || 0),
@@ -67,51 +70,63 @@ async function updateLoanEntity(context: any, vaultAddress: string, borrowerAddr
     lastEventBlock: BigInt(event.block.number),
     lastEventType: eventType,
     isActive: true,
+    // Ensure troveId is updated if somehow missing initially
+    troveId: event.args._troveId
   };
 
   try {
-    // Try to insert first with onConflictDoUpdate
     await context.db.insert(loanEntity)
       .values({
-        id: loanId,
+        id: troveIdString, // Use troveIdString as the unique ID
         vaultAddress: vaultAddress,
         borrowerAddress: borrowerAddress,
-        troveId: event.args._troveId,
-        ...updateData,
-        healthFactor: 1.0, // Will be updated by a separate calculation
+        troveId: event.args._troveId, // Keep the BigInt version if schema requires
+        // Initial values for insert (some overwritten by updateData on conflict)
+        outstandingDebt: updateData.outstandingDebt,
+        collateralAmount: updateData.collateralAmount,
+        interestRate: updateData.interestRate,
+        healthFactor: 1.0, // Placeholder
+        isActive: updateData.isActive,
+        lastEventType: updateData.lastEventType,
+        lastEventTimestamp: updateData.lastEventTimestamp,
+        lastEventBlock: updateData.lastEventBlock
       })
       .onConflictDoUpdate({
-        updateData
+        target: ['id'], // Specify the conflict target column
+        updateData // Data to update on conflict
       });
-    
-    // console.log(`Upserted loan entity ${loanId}`);
+
   } catch (error: any) {
-    console.error(`Error upserting loan entity ${loanId}:`, error);
+    console.error(`Error upserting loan entity with ID ${troveIdString}:`, error);
     throw error;
   }
 }
 
 // Helper function to store loan event
-async function storeLoanEvent(context: any, eventId: string, loanId: string, event: any, eventType: string) {
+// Use troveIdString for loanId reference
+async function storeLoanEvent(context: any, eventId: string, event: any, eventType: string) {
+  const troveIdString = event.args._troveId.toString();
+  const borrowerAddress = event.transaction.from; // Assuming tx sender is borrower
+
   try {
     await context.db.insert(loanEventEntity).values({
       id: eventId,
-      loanId: loanId,
+      loanId: troveIdString, // Reference LoanEntity using troveIdString
       eventType: eventType,
       debtChange: BigInt(event.args._debtChangeFromOperation || event.args._debtChange || 0),
       collateralChange: BigInt(event.args._collChangeFromOperation || event.args._collChange || 0),
-      healthFactorAfter: 1.0, // Will be updated by a separate calculation
+      healthFactorAfter: 1.0, // Placeholder
       blockNumber: BigInt(event.block.number),
       timestamp: BigInt(event.block.timestamp),
       transactionHash: event.transaction.hash,
-      borrowerAddress: event.transaction.from,
-      troveId: event.args._troveId,
+      borrowerAddress: borrowerAddress,
+      troveId: event.args._troveId, // Keep BigInt troveId if needed
     });
   } catch (error: any) {
     if (!error?.message?.includes('duplicate key')) {
       throw error;
     }
-    console.log(`Duplicate loan event ${eventId} - skipping`);
+    // console.log(`Duplicate loan event ${eventId} - skipping`);
   }
 }
 
@@ -161,10 +176,9 @@ ponder.on("TroveManager:TroveOperation", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store loan event and update loan entity
-    const loanId = `${contractAddress}-${borrowerAddress}`;
-    await storeLoanEvent(context, eventId, loanId, event, 'operation');
-    await updateLoanEntity(context, contractAddress, borrowerAddress, event, 'operation');
+    // Store loan event and update loan entity (pass event directly)
+    await storeLoanEvent(context, eventId, event, 'operation');
+    await updateLoanEntity(context, event, 'operation');
     
     console.log('TroveManager:TroveOperation event processed');
   } catch (error) {
@@ -218,10 +232,9 @@ ponder.on("TroveManager:TroveUpdated", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store loan event and update loan entity
-    const loanId = `${contractAddress}-${borrowerAddress}`;
-    await storeLoanEvent(context, eventId, loanId, event, 'update');
-    await updateLoanEntity(context, contractAddress, borrowerAddress, event, 'update');
+    // Store loan event and update loan entity (pass event directly)
+    await storeLoanEvent(context, eventId, event, 'update');
+    await updateLoanEntity(context, event, 'update');
     
     console.log('TroveManager:TroveUpdated event processed');
   } catch (error) {
@@ -275,14 +288,14 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store loan event
-    const loanId = `${contractAddress}-${borrowerAddress}`;
-    await storeLoanEvent(context, eventId, loanId, event, 'liquidation');
+    const troveIdString = event.args._troveId.toString();
 
-    // Update loan entity to mark as liquidated
-    await context.db.update(loanEntity).values({
-      where: { id: loanId },
-      data: {
+    // Store loan event
+    await storeLoanEvent(context, eventId, event, 'liquidation');
+
+    // Update loan entity to mark as liquidated using troveIdString as ID
+    await context.db.update(loanEntity)
+      .set({
         outstandingDebt: BigInt(0),
         collateralAmount: BigInt(0),
         healthFactor: 0.0,
@@ -290,17 +303,17 @@ ponder.on("TroveManager:Liquidation", async (params: any) => {
         lastEventBlock: BigInt(blockNumber),
         lastEventType: 'liquidation',
         isActive: false,
-      },
-    });
+      })
+      .where({ id: troveIdString }); // Use troveIdString in where clause
     
-    console.log('TroveManager:Liquidation event processed');
+    console.log('TroveManager:Liquidation event processed for troveId:', troveIdString);
   } catch (error) {
     console.error('Error processing TroveManager:Liquidation event:', error);
   }
 });
 
 // Handler for BatchUpdated events
-// @ts-ignore - TypeScript type error with event handler signature
+// @ts-ignore - ignore potentially incorrect event name for now
 ponder.on("TroveManager:BatchUpdated", async (params: any) => {
   try {
     const { event, context } = params;
@@ -345,10 +358,9 @@ ponder.on("TroveManager:BatchUpdated", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store loan event and update loan entity
-    const loanId = `${contractAddress}-${borrowerAddress}`;
-    await storeLoanEvent(context, eventId, loanId, event, 'batch_update');
-    await updateLoanEntity(context, contractAddress, borrowerAddress, event, 'batch_update');
+    // Placeholder: Original logic kept, needs review based on ABI
+    await storeLoanEvent(context, eventId, event, 'batch_update');
+    await updateLoanEntity(context, event, 'batch_update');
     
     console.log('TroveManager:BatchUpdated event processed');
   } catch (error) {
@@ -357,7 +369,7 @@ ponder.on("TroveManager:BatchUpdated", async (params: any) => {
 });
 
 // Handler for BatchedTroveUpdated events
-// @ts-ignore - TypeScript type error with event handler signature
+// @ts-ignore - ignore potentially incorrect event name for now
 ponder.on("TroveManager:BatchedTroveUpdated", async (params: any) => {
   try {
     const { event, context } = params;
@@ -402,10 +414,9 @@ ponder.on("TroveManager:BatchedTroveUpdated", async (params: any) => {
       data: serializeEvent(event),
     });
 
-    // Store loan event and update loan entity
-    const loanId = `${contractAddress}-${borrowerAddress}`;
-    await storeLoanEvent(context, eventId, loanId, event, 'batch_update');
-    await updateLoanEntity(context, contractAddress, borrowerAddress, event, 'batch_update');
+    // Store loan event and update loan entity (pass event directly)
+    await storeLoanEvent(context, eventId, event, 'batch_update');
+    await updateLoanEntity(context, event, 'batch_update');
     
     console.log('TroveManager:BatchedTroveUpdated event processed');
   } catch (error) {

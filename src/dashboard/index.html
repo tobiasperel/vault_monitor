@@ -118,38 +118,47 @@
           <div class="col-lg-9">
             <!-- Summary Cards Row 1 -->
             <div class="row">
+              <!-- Card 1: Total BTC Assets (Boring Vault) -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark mb-4">
+                <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>HLP Equity (USDC)</h5>
-                    <h2 id="hlp-equity">-</h2>
+                    <h5>Vault Assets (BTC)</h5>
+                    <div class="summary-value" id="summary-vault-assets">
+                      <span class="value-primary">-</span><br>
+                      <span class="value-secondary">(-)</span>
+                    </div>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <a class="small stretched-link" href="#vaults">View Vault Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
+              <!-- Card 2: Total BTC Collateral (Felix Loans) -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark mb-4">
+                <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>HLP Spot (USDC)</h5>
-                    <h2 id="hlp-spot-balance">-</h2>
+                    <h5>Loan Collateral (BTC)</h5>
+                    <div class="summary-value" id="summary-loan-collateral">
+                      <span class="value-primary">-</span><br>
+                      <span class="value-secondary">(-)</span>
+                    </div>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <a class="small stretched-link" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
+              <!-- Card 3: Total Debt (Felix Loans) -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-dark mb-4">
+                <div class="card bg-danger text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Total Assets (BTC)</h5>
-                    <h2 id="total-assets">-</h2>
+                    <h5>Total Debt (feUSD)</h5>
+                    <h2 id="summary-total-debt">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <a class="small stretched-link" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -157,38 +166,72 @@
             </div>
             <!-- Summary Cards Row 2 -->
             <div class="row mb-5">
+              <!-- Card 4: Avg Loan Interest Rate -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-success mb-4">
+                <div class="card bg-dark text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Total Shares (feBTC)</h5>
-                    <h2 id="total-shares">-</h2>
+                    <h5>Avg Loan Rate (%)</h5>
+                    <h2 id="summary-avg-loan-rate">-</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vaults">View Details</a>
+                    <a class="small stretched-link" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
+              <!-- Card 5: Amount Deposited in HLP -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-warning mb-4">
+                <div class="card mb-4">
                   <div class="card-body text-center">
-                    <h5>Active Users</h5>
-                    <h2 id="active-users">-</h2>
+                    <h5>HLP Deposits (USDC)</h5>
+                    <!-- Verify this block is EXACTLY like this -->
+                    <div class="summary-value" id="summary-hlp-deposits">
+                      <span class="value-primary">-</span><br>
+                      <span class="value-secondary">(-)</span>
+                    </div>
+                    <!-- End verification block -->
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#vault-users">View Details</a>
+                    <a class="small stretched-link" href="#hlp">View HLP Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
               </div>
+              <!-- Card 6: HLP Yield -->
               <div class="col-xl-4 col-md-6">
-                <div class="card bg-danger mb-4">
+                <div class="card bg-warning text-white mb-4">
                   <div class="card-body text-center">
-                    <h5>Debt (feUSD)</h5>
-                    <h2 id="outstanding-debt">-</h2>
+                    <h5>HLP Yield (%)</h5>
+                    <h2 id="summary-hlp-yield">TBD</h2>
                   </div>
                   <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="#loans">View Details</a>
+                    <a class="small stretched-link" href="#hlp">View HLP Details</a>
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+               <!-- Card 7: Net Interest Rate Revenue -->
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Net Rate Revenue</h5>
+                    <h2 id="summary-net-revenue">TBD</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small stretched-link" href="#loans">View Loan Details</a>
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+               <!-- Card 8: Net Interest Rate Profit -->
+              <div class="col-xl-4 col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                  <div class="card-body text-center">
+                    <h5>Net Rate Profit</h5>
+                    <h2 id="summary-net-profit">TBD</h2>
+                  </div>
+                  <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small stretched-link" href="#loans">View Loan Details</a>
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
@@ -246,13 +289,8 @@
                   </div>
                 </div>
               </div>
-              <!-- Note: riskChart canvas was here, removed for now as it's redundant/unclear -->
-              <!-- <div class="col-md-6">
-                <canvas id="riskChart" width="100%" height="50"></canvas>
-              </div> -->
         </div>
         <!-- End Charts Section -->
-
 
         <!-- Vaults Section -->
         <h2 id="vaults" class="mt-5 mb-4">Vaults</h2>
@@ -471,6 +509,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <!-- Add Date Adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/date-fns@2.28.0/date-fns.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- End Date Adapter -->
   <script src="script.js"></script>
 </body>
 </html> 

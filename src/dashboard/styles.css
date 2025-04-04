@@ -194,13 +194,71 @@ h2 { /* Section headers */
 .card a:hover { color: var(--felix-accent-primary); }
 
 /* Summary card values */
-.card h2 {
-  font-size: 2rem; /* Slightly smaller */
-  font-weight: 600;
-  border: none; /* Remove inherited border */
-  padding-bottom: 0; /* Remove inherited padding */
-  margin-bottom: 0 !important; /* Remove inherited margin */
+.card h2 { /* Applies to non-stacked values like Debt, Rate, HLP Deposits */
+  font-size: 2.1rem; /* Match primary stacked value size */
+  font-weight: 600; /* Match primary stacked value weight */
+  border: none;
+  padding-bottom: 0;
+  margin-bottom: 0 !important;
   display: block;
+}
+
+/* --- Card Borders --- */
+/* Basic style for summary cards */
+.col-lg-9 .card {
+    border-left-width: 4px;
+    border-left-style: solid;
+    border-left-color: transparent; /* Default transparent */
+}
+
+/* Assign specific border colors based on card value ID */
+/* Targeting the parent .card element */
+.col-lg-9 .card:has(#summary-vault-assets) { /* Card 1: Vault Assets */
+    border-left-color: var(--bs-primary);
+}
+.col-lg-9 .card:has(#summary-loan-collateral) { /* Card 2: Loan Collateral */
+    border-left-color: var(--bs-info);
+}
+.col-lg-9 .card:has(#summary-total-debt) { /* Card 3: Total Debt */
+    border-left-color: var(--bs-danger);
+}
+.col-lg-9 .card:has(#summary-avg-loan-rate) { /* Card 4: Avg Loan Rate */
+    border-left-color: var(--bs-secondary);
+}
+.col-lg-9 .card:has(#summary-hlp-deposits) { /* Card 5: HLP Deposits */
+    border-left-color: var(--bs-success);
+}
+.col-lg-9 .card:has(#summary-hlp-yield) { /* Card 6: HLP Yield */
+    border-left-color: var(--bs-warning);
+}
+.col-lg-9 .card:has(#summary-net-revenue) { /* Card 7: Net Revenue */
+    border-left-color: var(--bs-gray-500); /* Use gray for better visibility */
+}
+.col-lg-9 .card:has(#summary-net-profit) { /* Card 8: Net Profit */
+    border-left-color: var(--bs-dark);
+}
+/* --- End Card Borders --- */
+
+.col-lg-9 .card .card-body {
+  display: flex;              /* Use flexbox */
+  flex-direction: column;   /* Stack title and value */
+  justify-content: center;  /* Center the whole block vertically */
+  align-items: center;      /* Center the whole block horizontally */
+  min-height: 120px;        /* Keep minimum height */
+  text-align: center;       /* Ensure text within is centered */
+  padding: 1rem;            /* Adjust padding as needed */
+}
+
+/* Remove flex styles previously applied directly to value containers */
+.col-lg-9 .card .card-body h2,
+.col-lg-9 .card .card-body .summary-value {
+    /* Remove properties like display: flex, min-height, flex-grow if they exist from previous attempts */
+    width: 100%; /* Ensure full width for text centering */
+}
+
+/* Adjust title margin */
+.col-lg-9 .card .card-body h5 {
+    margin-bottom: 0.75rem;
 }
 
 /* Card Footer */
@@ -393,4 +451,25 @@ body[data-theme="dark"] #theme-icon-moon {
     border-bottom: var(--felix-border-thickness) solid var(--felix-border-color);
   }
   main { margin-top: 20px; }
+}
+
+.summary-value .value-primary {
+  font-size: 1.6rem;
+  font-weight: 600;
+  display: block;
+  line-height: 1.1;
+}
+
+.summary-value .value-secondary {
+  font-size: 1.0rem;
+  opacity: 0.8;
+  display: block;
+  margin-top: -20px;
+}
+
+/* Keep table values simpler */
+.table .btc-value {
+    display: block;
+    font-size: 0.85em;
+    opacity: 0.7;
 } 
