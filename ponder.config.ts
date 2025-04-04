@@ -151,6 +151,6 @@ export default createConfig({
   },
   database: {
     kind: 'pglite',
-    directory: '/Users/archev/Documents/GitHub/vault_monitor/db'
+    directory: './db'
   }
 });
