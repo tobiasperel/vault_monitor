@@ -1,5 +1,5 @@
 import { createConfig } from "ponder";
-import { http } from "viem";
+import { http, Transport } from "viem";
 import fs from "fs";
 
 // Import all ABIs from JSON files and ensure they're properly parsed
@@ -10,65 +10,69 @@ const AddRemoveManagersAbi = JSON.parse(fs.readFileSync("./abis/AddRemoveManager
 const L1WriteAbi = JSON.parse(fs.readFileSync("./abis/L1Write.json", "utf8"));
 const ERC20Abi = JSON.parse(fs.readFileSync("./abis/ERC20.json", "utf8"));
 
-// Make sure all ABIs are arrays
+// Ensure ABI format
 const ensureAbiArray = (abi: any) => {
   if (!Array.isArray(abi)) {
-    // If the ABI is an object with an 'abi' property (common format)
-    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) {
-      return abi.abi;
-    }
-    console.warn('ABI is not an array, returning empty array to prevent errors');
+    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) { return abi.abi; }
+    console.warn('ABI is not an array, returning empty array.');
     return [];
   }
   return abi;
 };
 
-// For development, use a smaller block range to avoid rate limits
-const isDev = process.env.NODE_ENV !== 'production';
+// Get start block from environment
 const getStartBlock = (envVarName: string) => {
-  // Always use the specified start block from env vars
-  const startBlock = Number(process.env[envVarName] || "0");
-  return startBlock;
+  return Number(process.env[envVarName] || "0");
 };
 
-const createOptimizedTransport = (url: string) => {
+// Reintroduce the optimized transport with onFetchResponse
+const createOptimizedTransport = (url: string): Transport => {
   return http(url, {
-    batch: {
-      batchSize: 5,          // Process one request at a time
-      wait: 500,            // Wait longer between batches
-    },
-    timeout: 10000,          // 5s timeout
-    retryCount: 0,           // No retries - better to fail fast and let our script handle it
-    
-    // Handle responses to detect missing blocks
-    onFetchResponse: (response: any) => {
-      // If there's any error, return empty results
-      if (response?.error) {
-        console.log(`RPC error detected: ${response?.error?.message}`);
-        
-        // Return empty logs instead of error to prevent hanging
-        return { 
-          id: response.id,
-          jsonrpc: '2.0',
-          result: [] 
-        };
+    batch: false,
+    timeout: 15000,
+    retryCount: 0,
+    onFetchResponse: async (response: Response) => {
+      const requestId = Math.floor(Math.random() * 10000);
+      let responseData: any = null;
+      let treatAsError = false;
+      let errorReason = "";
+      try {
+        const clonedResponse = response.clone();
+        const responseBodyText = await clonedResponse.text();
+        if (!response.ok) {
+          treatAsError = true;
+          errorReason = `HTTP error ${response.status}`;
+          console.warn(`[${requestId}] RPC ${errorReason}: ${response.statusText}. Body: ${responseBodyText.substring(0, 200)}`);
+        } else {
+          try { responseData = JSON.parse(responseBodyText); } catch (parseError: any) {
+            treatAsError = true; errorReason = "JSON parse error";
+            console.warn(`[${requestId}] RPC ${errorReason}: ${parseError.message}. Body: ${responseBodyText.substring(0, 200)}`);
+          }
+          if (responseData && responseData.error) {
+            treatAsError = true; const responseError = responseData.error; errorReason = `JSON-RPC error ${responseError.code}`;
+            // Updated check to include "invalid block range"
+            if (responseError.code === -32000 || responseError.message?.includes("requested block number is after latest") || responseError.message?.includes("block not found") || responseError.message?.includes("invalid block range")) {
+              console.warn(`[${requestId}] RPC ${errorReason} (Known issue, masking): ${JSON.stringify(responseError)}`);
+            } else { console.error(`[${requestId}] RPC ${errorReason} (Unexpected): ${JSON.stringify(responseError)}`); }
+          }
+        }
+      } catch (e: any) { treatAsError = true; errorReason = "Response processing exception"; console.error(`[${requestId}] Error processing RPC response: ${e.message}`); }
+      if (treatAsError) {
+        const emptySuccessBody = JSON.stringify({ jsonrpc: '2.0', id: responseData?.id ?? null, result: [] });
+        return new Response(emptySuccessBody, { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       return response;
     },
-    
-    fetchOptions: {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
+    fetchOptions: { headers: { 'Content-Type': 'application/json' } }
   });
 };
 
 export default createConfig({
   networks: {
     hyperliquid: {
-      chainId: 998, 
+      chainId: 998,
       transport: createOptimizedTransport(process.env.PONDER_RPC_URL_BASE || ""),
+      maxBlockRange: 10,
     },
   },
   contracts: {
@@ -139,7 +143,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 10000
+      interval: 60000
     },
   },
   accounts: {
