@@ -9,14 +9,14 @@ START_BLOCK=20000001  # Starting just after the failing range (19422983 to 19423
 # Variables for loop/hang detection & skipping
 PREVIOUS_START_BLOCK=-1
 RETRY_COUNT=0
-MAX_RETRIES=3 # Max times to retry the *exact same* start block before skipping
-SKIP_AHEAD_AMOUNT=10000 # Increased skip amount significantly
-HANG_TIMEOUT=180 # Timeout for hang detection (in seconds)
+MAX_RETRIES=2 # Max times to retry the *exact same* start block before skipping
+SKIP_AHEAD_AMOUNT=20 # Increased skip amount significantly
+HANG_TIMEOUT=10 # Timeout for hang detection (in seconds)
 
 # Define known problematic block ranges (Format: "START_BLOCK:END_BLOCK")
 KNOWN_BAD_RANGES=(
-  "20460297:20460344",
-  "20461592:20461615",
+  "20460297:20460344"
+  "20461592:20461615"
   "20490340:20496021"
 )
 
@@ -92,8 +92,11 @@ const ERC20Abi = JSON.parse(fs.readFileSync("./abis/ERC20.json", "utf8"));
 // Ensure ABI format
 const ensureAbiArray = (abi: any) => {
   if (!Array.isArray(abi)) {
-    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) { return abi.abi; }
-    console.warn('ABI is not an array, returning empty array.');
+    // If the ABI is an object with an 'abi' property (common format)
+    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) {
+      return abi.abi;
+    }
+    console.warn('ABI is not an array, returning empty array to prevent errors');
     return [];
   }
   return abi;
@@ -107,8 +110,11 @@ const getStartBlock = (envVarName: string) => {
 // Reintroduce the optimized transport with onFetchResponse
 const createOptimizedTransport = (url: string): Transport => {
   return http(url, {
-    batch: false,
-    timeout: 15000,
+    batch: {
+      batchSize: 1,          // Process one request at a time
+      wait: 500,            // Wait longer between batches
+    },
+    timeout: 10000,
     retryCount: 0,
     onFetchResponse: async (response: Response) => {
       const requestId = Math.floor(Math.random() * 10000);
@@ -142,7 +148,12 @@ const createOptimizedTransport = (url: string): Transport => {
       }
       return response;
     },
-    fetchOptions: { headers: { 'Content-Type': 'application/json' } }
+    
+    fetchOptions: {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
   });
 };
 
@@ -151,7 +162,6 @@ export default createConfig({
     hyperliquid: {
       chainId: 998,
       transport: createOptimizedTransport(process.env.PONDER_RPC_URL_BASE || ""),
-      maxBlockRange: 10,
     },
   },
   contracts: {
@@ -222,7 +232,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 60000
+      interval: 10000
     },
   },
   accounts: {
@@ -242,24 +252,15 @@ EOL
 
 # Main retry loop
 while true; do
-  # --- Proactively Skip Known Bad Ranges --- 
-  SKIP_PERFORMED=false
-  for bad_range in "${KNOWN_BAD_RANGES[@]}"; do
-    B_START=$(echo $bad_range | cut -d':' -f1)
-    B_END=$(echo $bad_range | cut -d':' -f2)
-    
-    if [[ "$START_BLOCK" -le "$B_END" ]]; then
-      NEW_SKIP_TARGET=$((B_END + 1))
-      if [[ "$NEW_SKIP_TARGET" -gt "$START_BLOCK" ]]; then
-         echo "*** Proactively skipping known bad range $bad_range. Setting START_BLOCK to $NEW_SKIP_TARGET ***"
-         START_BLOCK=$NEW_SKIP_TARGET
-         SKIP_PERFORMED=true # Mark that we potentially updated START_BLOCK
-         # We only need to skip the *first* bad range that affects the current START_BLOCK
-         break
-      fi
+  # --- Loop Detection Logic ---
+  if [[ "$START_BLOCK" -eq "$PREVIOUS_START_BLOCK" ]]; then
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [[ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]]; then
+      echo "Max retries reached. Skipping to next block."
+      PREVIOUS_START_BLOCK=$START_BLOCK
+      START_BLOCK=$((START_BLOCK + SKIP_AHEAD_AMOUNT))
     fi
-  done
-  # --- End Proactive Skip --- 
+  fi
 
   echo "Starting Ponder from block $START_BLOCK"
   
@@ -286,9 +287,9 @@ while true; do
   else
     echo "Ponder did not complete successfully or exited."
     # The loop will continue, and the START_BLOCK might be adjusted by the
-    # proactive skip logic if the failure was within a known bad range.
-    # If the failure is outside known ranges, it will retry from the same START_BLOCK.
-    # Add manual intervention if it gets stuck outside known ranges.
+    # loop detection logic if the failure was within a retry range.
+    # If the failure is outside retry ranges, it will retry from the same START_BLOCK.
+    # Add manual intervention if it gets stuck outside retry ranges.
   fi
   
   echo "Cleaning up before potential retry..."

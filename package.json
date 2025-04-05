@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "reset": "rm -rf db && yarn cache clean && ./retry-sync.sh",
     "dev": "ponder dev",
     "start": "ponder start",
     "db": "ponder db",

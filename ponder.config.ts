@@ -13,8 +13,11 @@ const ERC20Abi = JSON.parse(fs.readFileSync("./abis/ERC20.json", "utf8"));
 // Ensure ABI format
 const ensureAbiArray = (abi: any) => {
   if (!Array.isArray(abi)) {
-    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) { return abi.abi; }
-    console.warn('ABI is not an array, returning empty array.');
+    // If the ABI is an object with an 'abi' property (common format)
+    if (abi && typeof abi === 'object' && Array.isArray(abi.abi)) {
+      return abi.abi;
+    }
+    console.warn('ABI is not an array, returning empty array to prevent errors');
     return [];
   }
   return abi;
@@ -28,8 +31,11 @@ const getStartBlock = (envVarName: string) => {
 // Reintroduce the optimized transport with onFetchResponse
 const createOptimizedTransport = (url: string): Transport => {
   return http(url, {
-    batch: false,
-    timeout: 15000,
+    batch: {
+      batchSize: 1,          // Process one request at a time
+      wait: 500,            // Wait longer between batches
+    },
+    timeout: 10000,
     retryCount: 0,
     onFetchResponse: async (response: Response) => {
       const requestId = Math.floor(Math.random() * 10000);
@@ -63,7 +69,12 @@ const createOptimizedTransport = (url: string): Transport => {
       }
       return response;
     },
-    fetchOptions: { headers: { 'Content-Type': 'application/json' } }
+    
+    fetchOptions: {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
   });
 };
 
@@ -72,7 +83,6 @@ export default createConfig({
     hyperliquid: {
       chainId: 998,
       transport: createOptimizedTransport(process.env.PONDER_RPC_URL_BASE || ""),
-      maxBlockRange: 10,
     },
   },
   contracts: {
@@ -143,7 +153,7 @@ export default createConfig({
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
-      interval: 60000
+      interval: 10000
     },
   },
   accounts: {
