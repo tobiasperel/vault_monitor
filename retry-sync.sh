@@ -170,30 +170,35 @@ export default createConfig({
       abi: ensureAbiArray(BoringVaultAbi),
       address: process.env.BORING_VAULT_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('BORING_VAULT_START_BLOCK'),
+      endBlock: 20460290,
     },
     Teller: {
       network: "hyperliquid",
       abi: ensureAbiArray(TellerAbi),
       address: process.env.TELLER_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('TELLER_START_BLOCK'),
+      endBlock: 20460290,
     },
     TroveManager: {
       network: "hyperliquid",
       abi: ensureAbiArray(TroveManagerAbi),
       address: process.env.TROVE_MANAGER_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('TROVE_MANAGER_START_BLOCK'),
+      endBlock: 20460290,
     },
     AddRemoveManagers: {
       network: "hyperliquid",
       abi: ensureAbiArray(AddRemoveManagersAbi),
       address: process.env.BORROWER_OPERATIONS_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('BORROWER_OPERATIONS_START_BLOCK'),
+      endBlock: 20460290,
     },
     HLP: {
       network: "hyperliquid",
       abi: ensureAbiArray(L1WriteAbi),
       address: process.env.L1WRITE_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('L1WRITE_START_BLOCK'),
+      endBlock: 20460290,
       filter: [{
         event: 'VaultTransfer',
         args: {
@@ -226,12 +231,14 @@ export default createConfig({
           to: process.env.HLP_VAULT_ADDRESS as `0x${string}`,
         },
       }],
+      endBlock: 20460290,
     },
   },
   blocks: {
     L1Read: {
       network: "hyperliquid",
       startBlock: getStartBlock('L1READ_START_BLOCK'),
+      endBlock: 20460290,
       interval: 10000
     },
   },
@@ -240,6 +247,7 @@ export default createConfig({
       network: "hyperliquid",
       address: process.env.BORING_VAULT_ADDRESS as `0x${string}`,
       startBlock: getStartBlock('BORING_VAULT_START_BLOCK'),
+      endBlock: 20460290,
     },
   },
   database: {
