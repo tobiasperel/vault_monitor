@@ -26,13 +26,13 @@ update_env_file() {
   
   cat > .env.temp << EOL
 # Mainnet RPC URL used for fetching blockchain data
-PONDER_RPC_URL_1="http://69.62.71.230:3001/evm"
+PONDER_RPC_URL_1="http://localhost:3001/evm"
 
 # Postgres database URL for Ponder - pointing to Supabase PostgreSQL
 DATABASE_URL="postgresql://postgres:HjYeGV2Lyr9J4V3T@db.nctdcgedcpptlifinpky.supabase.co:5432/postgres?sslmode=require&pool_timeout=0"
 
 # Base chain RPC
-PONDER_RPC_URL_BASE="http://69.62.71.230:3001/evm"
+PONDER_RPC_URL_BASE="http://localhost:3001/evm"
 
 # Contract addresses
 BORING_VAULT_ADDRESS="0x208EeF7B7D1AcEa7ED4964d3C5b0c194aDf17412"
@@ -283,7 +283,7 @@ while true; do
   
   # Run Ponder in the foreground and tee output
   # Use NODE_ENV=production for potentially fewer logs/faster indexing
-  NODE_ENV=production PORT=3001 API_PORT=3002 yarn dev 2>&1 | tee ponder_output.log
+  NODE_ENV=production PORT=3003 API_PORT=3004 yarn dev 2>&1 | tee ponder_output.log
   EXIT_CODE=$? # Capture exit code
   
   echo "Ponder process finished with exit code $EXIT_CODE."

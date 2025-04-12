@@ -108,7 +108,7 @@ async function fetchData(query) {
   try {
     console.log('Attempting to fetch from GraphQL endpoint... Query:', query.trim().substring(0, 100) + '...');
     
-    const response = await fetch('https://066c76113133.ngrok.app/graphql', {
+    const response = await fetch('https://srv779521.hstgr.cloud/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
