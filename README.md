@@ -44,6 +44,25 @@ The Vault Monitor consists of several components:
    ```
    This will output the SQL statements to create the necessary tables. Execute them in your Supabase SQL editor.
 
+### HYPE Vault Setup
+
+For HYPE vault monitoring specifically:
+
+1. Set up HYPE vault database schema:
+   ```
+   npm run setup-hype
+   ```
+
+2. Start HYPE vault monitoring:
+   ```
+   npm run hype-monitor
+   ```
+
+3. Start HYPE vault API and background jobs:
+   ```
+   npm run dev-hype
+   ```
+
 ### Contract Configuration
 
 Update the following in your `.env` file:
@@ -80,8 +99,16 @@ npm run jobs
 
 You can also run each component individually:
 
+**General monitoring:**
 - Fetch latest price data: `npm run prices`
 - Calculate risk metrics: `npm run risk`
+- General monitoring: `npm run monitor`
+
+**HYPE vault specific:**
+- HYPE vault monitoring: `npm run hype-monitor`
+- HYPE vault background jobs: `npm run hype-jobs`
+- HYPE vault API server: `npm run hype-api`
+- HYPE vault setup: `npm run setup-hype`
 
 ## Development
 

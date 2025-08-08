@@ -36,7 +36,7 @@ function startScheduledJobs() {
 }
 
 // Start the jobs if this file is executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Starting scheduled jobs service...');
   startScheduledJobs();
   

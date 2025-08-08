@@ -160,7 +160,7 @@ async function calculateRiskMetrics() {
 }
 
 // Run the function directly if this file is executed
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   calculateRiskMetrics();
 }
 
