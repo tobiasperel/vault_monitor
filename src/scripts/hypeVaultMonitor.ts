@@ -55,6 +55,7 @@ class HypeVaultRiskMonitor {
   private stHypeTokenAddress: string;
   private publicClient;
   private chainId: number;
+  private timeoutMs: number = 5000; // 5 second timeout (reduced from 10s)
   
   constructor() {
     this.supabase = createClient(
@@ -66,7 +67,7 @@ class HypeVaultRiskMonitor {
     this.stHypeTokenAddress = process.env.STHYPE_TOKEN_ADDRESS!;
     this.chainId = parseInt(process.env.CHAIN_ID || '8453'); // Default to Base
     
-    // Initialize blockchain client based on chain
+    // Initialize blockchain client based on chain with timeout
     const chain = this.chainId === 1 ? mainnet : base;
     const defaultRpc = this.chainId === 1 
       ? 'https://mainnet.infura.io/v3/demo' 
@@ -74,10 +75,34 @@ class HypeVaultRiskMonitor {
       
     this.publicClient = createPublicClient({
       chain,
-      transport: http(process.env.RPC_URL || defaultRpc)
+      transport: http(process.env.RPC_URL || defaultRpc, {
+        timeout: this.timeoutMs
+      })
     });
     
     console.log(`Configured for ${chain.name} (Chain ID: ${this.chainId})`);
+  }
+
+  // Helper method to handle timeouts in contract calls
+  private async callWithTimeout<T>(contractCall: Promise<T>, fallbackValue?: T, description?: string): Promise<T> {
+    try {
+      console.log(`Attempting blockchain call: ${description || 'contract call'}...`);
+      const result = await Promise.race([
+        contractCall,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout after ${this.timeoutMs}ms`)), this.timeoutMs)
+        )
+      ]);
+      console.log(`Blockchain call successful: ${description || 'contract call'}`);
+      return result;
+    } catch (error) {
+      console.warn(`Blockchain call failed: ${description || 'contract call'} - ${error}`);
+      if (fallbackValue !== undefined) {
+        console.log(`Using fallback value for: ${description || 'contract call'}`);
+        return fallbackValue;
+      }
+      throw error;
+    }
   }
 
   // Helper method to get token price from DEX
@@ -104,11 +129,19 @@ class HypeVaultRiskMonitor {
         }
       }
       
-      // Priority 2: Use DEX price oracles directly
-      const dexPrice = await this.getDirectDexPrice(tokenAddress);
-      if (dexPrice > 0) {
-        console.log(`DEX oracle price for ${tokenAddress}: $${dexPrice}`);
-        return dexPrice;
+      // Priority 2: Use DEX price oracles directly with timeout
+      try {
+        const dexPrice = await this.callWithTimeout(
+          this.getDirectDexPrice(tokenAddress), 
+          0, 
+          `DEX price for ${tokenAddress}`
+        );
+        if (dexPrice > 0) {
+          console.log(`DEX oracle price for ${tokenAddress}: $${dexPrice}`);
+          return dexPrice;
+        }
+      } catch (dexError) {
+        console.log(`DEX price failed for ${tokenAddress}, trying CoinGecko...`);
       }
       
       // Priority 3: Use CoinGecko if token is HYPE
@@ -667,18 +700,23 @@ class HypeVaultRiskMonitor {
         // Add more ABI functions as needed
       ] as const;
 
-      // Get real data from contract
+      // Get real data from contract with timeout protection
+      const totalAssetsCall = this.publicClient.readContract({
+        address: this.vaultAddress as `0x${string}`,
+        abi: vaultAbi,
+        functionName: 'totalAssets'
+      });
+
+      const totalSupplyCall = this.publicClient.readContract({
+        address: this.vaultAddress as `0x${string}`,
+        abi: vaultAbi,
+        functionName: 'totalSupply'
+      });
+
+      // Use timeout protection for blockchain calls
       const [totalAssetsRaw, totalSupplyRaw] = await Promise.all([
-        this.publicClient.readContract({
-          address: this.vaultAddress as `0x${string}`,
-          abi: vaultAbi,
-          functionName: 'totalAssets'
-        }),
-        this.publicClient.readContract({
-          address: this.vaultAddress as `0x${string}`,
-          abi: vaultAbi,
-          functionName: 'totalSupply'
-        })
+        this.callWithTimeout(totalAssetsCall, BigInt(1000000000000000000), 'totalAssets'),
+        this.callWithTimeout(totalSupplyCall, BigInt(1000000000000000000), 'totalSupply')
       ]);
 
       // Convert from wei to readable numbers

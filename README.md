@@ -39,7 +39,7 @@ Execute the SQL script in `sql/create_missing_tables.sql` in your Supabase dashb
 
 ### Core Metrics Monitoring (Recommended)
 ```bash
-npm run core-metrics-clean    # Run core metrics with fallbacks
+npm run core-metrics-clean    # Run core metrics with fallbacks (RECOMMENDED)
 ```
 
 This command:
@@ -47,15 +47,18 @@ This command:
 - Calculates vault metrics according to assignment specifications
 - Stores data in Supabase
 - Generates alerts if thresholds are exceeded
+- **Has built-in fallbacks for RPC timeouts**
 
 ### Alternative Commands
 ```bash
-npm run core-metrics          # Core metrics with blockchain calls
+npm run core-metrics          # Core metrics with direct blockchain calls (may timeout on slow RPCs)
 npm run prices-only          # Price monitoring only
 npm run hype-monitor         # Single monitoring execution
 npm run hype-api             # API server only
 npm run hype-jobs            # Background monitoring jobs
 ```
+
+**Note:** If you get RPC timeout errors with `npm run core-metrics`, use `npm run core-metrics-clean` instead. It has better error handling and fallbacks for slow blockchain RPCs.
 
 ### Development Commands
 ```bash
