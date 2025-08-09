@@ -24,7 +24,20 @@
     "hype-jobs": "tsx src/scripts/hypeMonitoringJobs.ts",
     "hype-api": "tsx src/api/hypeVaultAPI.ts",
     "dev-hype": "concurrently \"npm run hype-api\" \"npm run hype-jobs\"",
-    "setup-hype": "node -e \"console.log('\\n=== HYPE Vault Database Schema ===\\n'); console.log(require('fs').readFileSync('./sql/hype_vault_schema.sql', 'utf8')); console.log('\\n=== Copy the above SQL and execute it in your Supabase SQL editor ===\\n');\""
+    "setup-hype": "node -e \"console.log('\\n=== HYPE Vault Database Schema ===\\n'); console.log(require('fs').readFileSync('./sql/hype_vault_schema.sql', 'utf8')); console.log('\\n=== Copy the above SQL and execute it in your Supabase SQL editor ===\\n');\"",
+    "verify-config": "tsx src/scripts/verifyConfig.ts",
+    "find-addresses": "tsx src/scripts/findAddresses.ts",
+    "verify-hype-token": "tsx src/scripts/verifyHypeToken.ts",
+    "search-real-hype": "tsx src/scripts/searchRealHype.ts",
+    "real-time": "tsx scripts/realTimeMonitor.ts",
+    "monitor-live": "tsx scripts/realTimeMonitor.ts",
+    "no-mocks": "tsx scripts/realTimeMonitor.ts",
+    "demo-real": "tsx scripts/realPricesOnly.ts",
+    "core-metrics": "tsx src/scripts/hypeVaultMonitor.ts",
+    "validate-supabase": "tsx scripts/validateAndRunCoreMetrics.ts",
+    "consigna": "tsx scripts/validateAndRunCoreMetrics.ts",
+    "core-metrics-fast": "tsx scripts/coreMetricsWithFallbacks.ts",
+    "prices-only": "tsx scripts/realPricesOnly.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
@@ -38,7 +51,7 @@
     "node-fetch": "2",
     "ponder": "0.10.3",
     "tsx": "^4.19.3",
-    "viem": "^2.21.3"
+    "viem": "^2.33.3"
   },
   "devDependencies": {
     "@types/cron": "^2.4.3",
