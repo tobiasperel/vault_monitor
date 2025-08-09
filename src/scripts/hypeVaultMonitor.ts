@@ -77,13 +77,13 @@ class HypeVaultRiskMonitor {
       transport: http(process.env.RPC_URL || defaultRpc)
     });
     
-    console.log(`🔗 Configured for ${chain.name} (Chain ID: ${this.chainId})`);
+    console.log(`Configured for ${chain.name} (Chain ID: ${this.chainId})`);
   }
 
   // Helper method to get token price from DEX
   async getTokenPrice(tokenAddress: string): Promise<number> {
     // ONLY REAL PRICES - NO MOCKS
-    console.log(`🔍 Fetching REAL price for ${tokenAddress}...`);
+    console.log(`Fetching REAL price for ${tokenAddress}...`);
     
     try {
       // Priority 1: Use 1inch price API if available
@@ -96,18 +96,18 @@ class HypeVaultRiskMonitor {
           });
           const price = parseFloat(response.data.price);
           if (price > 0) {
-            console.log(`✅ 1inch API price for ${tokenAddress}: $${price}`);
+            console.log(`1inch API price for ${tokenAddress}: $${price}`);
             return price;
           }
         } catch (oneInchError) {
-          console.log(`⚠️ 1inch API failed for ${tokenAddress}, trying alternatives...`);
+          console.log(`1inch API failed for ${tokenAddress}, trying alternatives...`);
         }
       }
       
       // Priority 2: Use DEX price oracles directly
       const dexPrice = await this.getDirectDexPrice(tokenAddress);
       if (dexPrice > 0) {
-        console.log(`✅ DEX oracle price for ${tokenAddress}: $${dexPrice}`);
+        console.log(`DEX oracle price for ${tokenAddress}: $${dexPrice}`);
         return dexPrice;
       }
       
@@ -115,7 +115,7 @@ class HypeVaultRiskMonitor {
       if (tokenAddress.toLowerCase() === this.hypeTokenAddress.toLowerCase()) {
         const coingeckoPrice = await this.getHypePriceFromCoinGecko();
         if (coingeckoPrice > 0) {
-          console.log(`✅ CoinGecko price for HYPE: $${coingeckoPrice}`);
+          console.log(`CoinGecko price for HYPE: $${coingeckoPrice}`);
           return coingeckoPrice;
         }
       }
@@ -124,7 +124,7 @@ class HypeVaultRiskMonitor {
       throw new Error(`NO REAL PRICE AVAILABLE for ${tokenAddress}`);
       
     } catch (error) {
-      console.error(`❌ FAILED TO GET REAL PRICE for ${tokenAddress}:`, error);
+      console.error(`FAILED TO GET REAL PRICE for ${tokenAddress}:`, error);
       throw error; // Don't return mock data - fail if no real price
     }
   }
@@ -168,7 +168,7 @@ class HypeVaultRiskMonitor {
       
       if (price && lastUpdated) {
         const ageMinutes = (Date.now()/1000 - lastUpdated) / 60;
-        console.log(`📊 CoinGecko HYPE: $${price} (updated ${ageMinutes.toFixed(1)} min ago)`);
+        console.log(` CoinGecko HYPE: $${price} (updated ${ageMinutes.toFixed(1)} min ago)`);
         return price;
       }
       
@@ -257,12 +257,12 @@ class HypeVaultRiskMonitor {
             const price = this.calculatePriceFromSqrtPriceX96(sqrtPriceX96);
             
             if (price > 0) {
-              console.log(`📊 Uniswap V3 price (${fee/10000}% fee): $${price}`);
+              console.log(` Uniswap V3 price (${fee/10000}% fee): $${price}`);
               return price;
             }
           }
         } catch (poolError) {
-          console.log(`⚠️ Pool with ${fee} fee tier not found, trying next...`);
+          console.log(` Pool with ${fee} fee tier not found, trying next...`);
         }
       }
       
@@ -321,7 +321,7 @@ class HypeVaultRiskMonitor {
         if (reserve0 > 0n && reserve1 > 0n) {
           // Calculate price (assuming token1 is USDC with 6 decimals)
           const price = parseFloat(formatUnits(reserve1, 6)) / parseFloat(formatUnits(reserve0, 18));
-          console.log(`📊 Aerodrome price: $${price}`);
+          console.log(` Aerodrome price: $${price}`);
           return price;
         }
       }
@@ -355,13 +355,13 @@ class HypeVaultRiskMonitor {
   // 2. stHYPE supplied as collateral in Felix (REAL DATA)
   async getStHypeCollateralInFelix(): Promise<number> {
     try {
-      console.log('🔍 Fetching stHYPE collateral in Felix (REAL)...');
+      console.log(' Fetching stHYPE collateral in Felix (REAL)...');
       
       // Felix protocol contract address (adjust based on actual deployment)
       const felixProtocolAddress = process.env.FELIX_PROTOCOL_ADDRESS || '0x0000000000000000000000000000000000000000';
       
       if (felixProtocolAddress === '0x0000000000000000000000000000000000000000') {
-        console.log('⚠️ Felix protocol address not configured, using vault balance');
+        console.log(' Felix protocol address not configured, using vault balance');
         // Fallback: Get stHYPE balance from vault
         return await this.getStHypeBalanceFromVault();
       }
@@ -384,11 +384,11 @@ class HypeVaultRiskMonitor {
       });
       
       const stHypeAmount = parseFloat(formatUnits(stHypeSupplied, 18));
-      console.log(`✅ stHYPE collateral in Felix: ${stHypeAmount.toFixed(2)} stHYPE`);
+      console.log(` stHYPE collateral in Felix: ${stHypeAmount.toFixed(2)} stHYPE`);
       return stHypeAmount;
       
     } catch (error) {
-      console.error('❌ Error fetching Felix collateral:', error);
+      console.error(' Error fetching Felix collateral:', error);
       // Fallback to vault balance
       return await this.getStHypeBalanceFromVault();
     }
@@ -397,7 +397,7 @@ class HypeVaultRiskMonitor {
   // 3. Outstanding HYPE borrowed (REAL DATA)
   async getOutstandingHypeBorrowed(): Promise<number> {
     try {
-      console.log('🔍 Fetching outstanding HYPE borrowed (REAL)...');
+      console.log(' Fetching outstanding HYPE borrowed (REAL)...');
       
       // Get borrowed amount from lending protocol
       const lendingProtocolAddress = process.env.LENDING_PROTOCOL_ADDRESS || this.vaultAddress;
@@ -419,15 +419,15 @@ class HypeVaultRiskMonitor {
       });
       
       const hypeBorrowed = parseFloat(formatUnits(borrowedAmount, 18));
-      console.log(`✅ Outstanding HYPE borrowed: ${hypeBorrowed.toFixed(2)} HYPE`);
+      console.log(` Outstanding HYPE borrowed: ${hypeBorrowed.toFixed(2)} HYPE`);
       return hypeBorrowed;
       
     } catch (error) {
-      console.error('❌ Error fetching borrowed HYPE:', error);
+      console.error(' Error fetching borrowed HYPE:', error);
       // Fallback calculation based on vault utilization
       const totalDeposits = await this.getTotalVaultDeposits();
       const estimatedBorrowed = totalDeposits * 0.6; // Assuming 60% utilization
-      console.log(`⚠️ Using estimated borrowed amount: ${estimatedBorrowed.toFixed(2)} HYPE`);
+      console.log(` Using estimated borrowed amount: ${estimatedBorrowed.toFixed(2)} HYPE`);
       return estimatedBorrowed;
     }
   }
@@ -435,7 +435,7 @@ class HypeVaultRiskMonitor {
   // 4. Net annualized yield on HYPE for the vault (REAL CALCULATION)
   async calculateNetAnnualizedYield(): Promise<number> {
     try {
-      console.log('🔍 Calculating net annualized yield on HYPE (REAL)...');
+      console.log(' Calculating net annualized yield on HYPE (REAL)...');
       
       // Get current staking APY for stHYPE
       const stakingAPY = await this.getStHypeStakingAPY();
@@ -452,7 +452,7 @@ class HypeVaultRiskMonitor {
       const grossYield = stakingAPY * leverageRatio;
       const netYield = grossYield - (borrowingAPR * (leverageRatio - 1));
       
-      console.log(`📊 Yield components:`);
+      console.log(` Yield components:`);
       console.log(`   • Staking APY: ${(stakingAPY * 100).toFixed(2)}%`);
       console.log(`   • Borrowing APR: ${(borrowingAPR * 100).toFixed(2)}%`);
       console.log(`   • Leverage: ${leverageRatio.toFixed(2)}x`);
@@ -461,7 +461,7 @@ class HypeVaultRiskMonitor {
       return netYield;
       
     } catch (error) {
-      console.error('❌ Error calculating net yield:', error);
+      console.error(' Error calculating net yield:', error);
       // Conservative fallback estimate
       return 0.05; // 5% conservative estimate
     }
@@ -530,7 +530,7 @@ class HypeVaultRiskMonitor {
       
       return parseFloat(formatUnits(apy, 4)) / 100; // Convert to decimal
     } catch (error) {
-      console.log('⚠️ Using estimated staking APY');
+      console.log(' Using estimated staking APY');
       return 0.08; // 8% estimated staking yield for stHYPE
     }
   }
@@ -555,7 +555,7 @@ class HypeVaultRiskMonitor {
       
       return parseFloat(formatUnits(borrowRate, 4)) / 100; // Convert to decimal
     } catch (error) {
-      console.log('⚠️ Using estimated borrowing APR');
+      console.log(' Using estimated borrowing APR');
       return 0.05; // 5% estimated borrowing cost for HYPE
     }
   }
@@ -690,7 +690,7 @@ class HypeVaultRiskMonitor {
       // const totalBorrowed = parseFloat(formatUnits(totalBorrowedRaw, 18));
       
       // CORE METRICS SEGÚN CONSIGNA "MONITORING & REPORTING"
-      console.log('📊 Calculando Core Metrics de la consigna...');
+      console.log(' Calculando Core Metrics de la consigna...');
       
       // 1. Total vault deposits (HYPE & USD-equivalent)
       const currentHypePrice = await this.getTokenPrice(this.hypeTokenAddress);
@@ -741,11 +741,11 @@ class HypeVaultRiskMonitor {
         riskScore
       };
 
-      console.log('✅ Core Metrics calculadas según consigna:');
-      console.log(`   📊 Total Vault Deposits: ${totalVaultDepositsHYPE.toFixed(2)} HYPE ($${totalVaultDepositsUSD.toLocaleString()})`);
+      console.log(' Core Metrics calculadas según consigna:');
+      console.log(`    Total Vault Deposits: ${totalVaultDepositsHYPE.toFixed(2)} HYPE ($${totalVaultDepositsUSD.toLocaleString()})`);
       console.log(`   🔒 stHYPE Collateral in Felix: ${stHypeCollateralInFelix.toFixed(2)} stHYPE`);
       console.log(`   💰 Outstanding HYPE Borrowed: ${outstandingHypeBorrowed.toFixed(2)} HYPE`);
-      console.log(`   📈 Net Annualized Yield: ${(netAnnualizedYieldHYPE * 100).toFixed(2)}%`);
+      console.log(`    Net Annualized Yield: ${(netAnnualizedYieldHYPE * 100).toFixed(2)}%`);
 
       return metrics;
     } catch (error) {
@@ -913,13 +913,13 @@ class HypeVaultRiskMonitor {
       ]);
       
       console.log('\n🎯 ===== CORE METRICS (CONSIGNA "MONITORING & REPORTING") =====');
-      console.log(`📊 Total Vault Deposits: ${vaultMetrics.totalVaultDepositsHYPE.toLocaleString()} HYPE`);
+      console.log(` Total Vault Deposits: ${vaultMetrics.totalVaultDepositsHYPE.toLocaleString()} HYPE`);
       console.log(`💰 Total Vault Deposits (USD): $${vaultMetrics.totalVaultDepositsUSD.toLocaleString()}`);
       console.log(`🔒 stHYPE Collateral in Felix: ${vaultMetrics.stHypeCollateralInFelix.toLocaleString()} stHYPE`);
       console.log(`💸 Outstanding HYPE Borrowed: ${vaultMetrics.outstandingHypeBorrowed.toLocaleString()} HYPE`);
-      console.log(`📈 Net Annualized Yield on HYPE: ${(vaultMetrics.netAnnualizedYieldHYPE * 100).toFixed(2)}%`);
+      console.log(` Net Annualized Yield on HYPE: ${(vaultMetrics.netAnnualizedYieldHYPE * 100).toFixed(2)}%`);
       
-      console.log('\n📊 ===== MÉTRICAS ADICIONALES =====');
+      console.log('\n ===== MÉTRICAS ADICIONALES =====');
       console.log(`  Total Staked: $${vaultMetrics.totalStaked.toLocaleString()}`);
       console.log(`  Total Borrowed: $${vaultMetrics.totalBorrowed.toLocaleString()}`);
       console.log(`  Leverage Ratio: ${vaultMetrics.leverageRatio.toFixed(2)}x`);
@@ -949,8 +949,8 @@ class HypeVaultRiskMonitor {
   // ===== SISTEMA DE MONITOREO CONTINUO Y AUTOMÁTICO =====
   // Auto-updating real-time monitoring system
   async startContinuousMonitoring(): Promise<void> {
-    console.log('🚀 INICIANDO MONITOREO CONTINUO EN TIEMPO REAL');
-    console.log('📊 SIN SIMULACIONES - SOLO DATOS REALES');
+    console.log(' STARTING CONTINUOUS REAL-TIME MONITORING');
+    console.log(' SIN SIMULACIONES - SOLO DATOS REALES');
     
     // Initial check
     await this.run();
@@ -958,35 +958,35 @@ class HypeVaultRiskMonitor {
     // Schedule continuous updates every 60 seconds for price monitoring
     setInterval(async () => {
       try {
-        console.log('⏰ Actualizando datos en tiempo real...');
+        console.log(' Updating real-time data...');
         await this.run();
       } catch (error) {
-        console.error('❌ Error en actualización automática:', error);
+        console.error(' Error en actualización automática:', error);
       }
     }, 60000); // 60 seconds
     
     // Schedule risk assessment every 5 minutes
     setInterval(async () => {
       try {
-        console.log('🔍 Evaluación completa de riesgo...');
+        console.log(' Evaluación completa de riesgo...');
         await this.performComprehensiveRiskAnalysis();
       } catch (error) {
-        console.error('❌ Error en análisis de riesgo:', error);
+        console.error(' Error en análisis de riesgo:', error);
       }
     }, 300000); // 5 minutes
     
     // Schedule health metrics every 15 minutes
     setInterval(async () => {
       try {
-        console.log('📈 Actualizando métricas de salud del vault...');
+        console.log(' Updating vault health metrics...');
         await this.updateVaultHealthMetrics();
       } catch (error) {
-        console.error('❌ Error en métricas de salud:', error);
+        console.error(' Error en métricas de salud:', error);
       }
     }, 900000); // 15 minutes
     
-    console.log('✅ Sistema de monitoreo continuo iniciado');
-    console.log('📊 Actualizaciones automáticas cada:');
+    console.log(' Sistema de monitoreo continuo iniciado');
+    console.log(' Actualizaciones automáticas cada:');
     console.log('   • Precios: 60 segundos');
     console.log('   • Riesgo: 5 minutos');
     console.log('   • Salud: 15 minutos');
@@ -1018,9 +1018,9 @@ class HypeVaultRiskMonitor {
         created_at: riskMetrics.timestamp
       });
       
-      console.log('📊 Análisis de riesgo completado:', riskMetrics);
+      console.log(' Análisis de riesgo completado:', riskMetrics);
     } catch (error) {
-      console.error('❌ Error en análisis comprehensivo:', error);
+      console.error(' Error en análisis comprehensivo:', error);
     }
   }
 
@@ -1038,9 +1038,9 @@ class HypeVaultRiskMonitor {
         created_at: new Date().toISOString()
       });
       
-      console.log('📈 Métricas de salud actualizadas:', health);
+      console.log(' Health metrics updated:', health);
     } catch (error) {
-      console.error('❌ Error actualizando salud del vault:', error);
+      console.error(' Error actualizando salud del vault:', error);
     }
   }
 

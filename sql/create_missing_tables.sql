@@ -1,22 +1,22 @@
 -- ====================================
--- SCRIPT SQL PARA CREAR TABLAS FALTANTES
--- Ejecutar en Supabase Dashboard > SQL Editor
+-- SQL SCRIPT TO CREATE MISSING TABLES
+-- Execute in Supabase Dashboard > SQL Editor
 -- ====================================
 
--- 1. CORE METRICS TABLE (TABLA PRINCIPAL DE LA CONSIGNA)
+-- 1. CORE METRICS TABLE (MAIN ASSIGNMENT TABLE)
 CREATE TABLE IF NOT EXISTS core_vault_metrics (
   id BIGSERIAL PRIMARY KEY,
   vault_address TEXT NOT NULL,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Core Metrics según consigna "Monitoring & Reporting"
+  -- Core Metrics according to "Monitoring & Reporting" assignment
   total_vault_deposits_hype DECIMAL(20,8),
   total_vault_deposits_usd DECIMAL(20,2),
   sthype_collateral_in_felix DECIMAL(20,8),
   outstanding_hype_borrowed DECIMAL(20,8),
   net_annualized_yield_hype DECIMAL(10,6),
   
-  -- Métricas adicionales para análisis
+  -- Additional metrics for analysis
   total_staked DECIMAL(20,2),
   total_borrowed DECIMAL(20,2),
   leverage_ratio DECIMAL(10,4),
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS core_vault_metrics (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Índices para core_vault_metrics
+-- Indexes for core_vault_metrics
 CREATE INDEX IF NOT EXISTS idx_core_vault_metrics_vault_timestamp ON core_vault_metrics(vault_address, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_core_vault_metrics_timestamp ON core_vault_metrics(timestamp DESC);
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS monitoring_errors (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. PRICE HISTORY TABLE (para volatilidad)
+-- 5. PRICE HISTORY TABLE (for volatility calculation)
 CREATE TABLE IF NOT EXISTS price_history (
   id BIGSERIAL PRIMARY KEY,
   token_symbol TEXT NOT NULL,
@@ -76,17 +76,17 @@ CREATE TABLE IF NOT EXISTS price_history (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Índices adicionales para performance
+-- Additional indexes for performance
 CREATE INDEX IF NOT EXISTS idx_risk_assessments_vault ON risk_assessments(vault_address, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_vault_health_vault ON vault_health(vault_address, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_monitoring_errors_timestamp ON monitoring_errors(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_price_history_token_timestamp ON price_history(token_symbol, timestamp DESC);
 
 -- ====================================
--- INSERTAR DATOS DE EJEMPLO (OPCIONAL)
+-- SAMPLE DATA INSERTION (OPTIONAL)
 -- ====================================
 
--- Ejemplo de precios históricos para HYPE
+-- Example historical prices for HYPE
 INSERT INTO price_history (token_symbol, price, source, timestamp) VALUES 
 ('HYPE', 41.25, 'CoinGecko', NOW() - INTERVAL '1 hour'),
 ('HYPE', 41.50, 'CoinGecko', NOW() - INTERVAL '30 minutes'),
@@ -94,10 +94,10 @@ INSERT INTO price_history (token_symbol, price, source, timestamp) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ====================================
--- VERIFICACIÓN
+-- VERIFICATION
 -- ====================================
 
--- Verificar que todas las tablas existen
+-- Verify that all tables exist
 SELECT 
   table_name,
   CASE 
@@ -109,8 +109,8 @@ SELECT
       'vault_health', 
       'alerts', 
       'monitoring_errors'
-    ) THEN '✅ Requerida'
-    ELSE '📊 Adicional'
+    ) THEN 'Required'
+    ELSE 'Additional'
   END as status
 FROM information_schema.tables 
 WHERE table_schema = 'public' 

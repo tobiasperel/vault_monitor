@@ -1,140 +1,134 @@
-# Vault Monitor
+# HYPE Vault Monitor
 
-A comprehensive monitoring system for BoringVault, Felix, and HLP events on the Base chain.
+A comprehensive monitoring system for HYPE vault metrics with real-time data integration and risk assessment.
 
-## System Architecture
+## Prerequisites
 
-The Vault Monitor consists of several components:
-
-1. **Event Indexing:** Ponder continuously indexes on-chain logs and events from the specified contracts on Base chain.
-2. **Data Storage:** Raw events are stored in both Ponder's database and a Supabase database for further processing.
-3. **Off-Chain Data Integration:** External APIs are used to fetch price and liquidity data.
-4. **Risk Aggregation:** Background jobs compute risk metrics based on both on-chain and off-chain data.
-5. **Alerting:** Critical risk conditions trigger notifications in the database.
+- Node.js 18+
+- Supabase database configured
+- Environment variables set in `.env`
 
 ## Setup
 
-### Prerequisites
-
-- Node.js 18.14 or higher
-- npm or yarn
-- Supabase account and project
-- RPC URLs for Base chain
-
-### Installation
-
-1. Clone the repository
-   ```
-   git clone https://github.com/0xdgoat/vault_monitor.git
-   cd vault_monitor
-   ```
-
-2. Install dependencies
-   ```
-   npm install
-   ```
-
-3. Configure environment variables
-   - Copy `.env.local` to `.env`
-   - Update with your actual RPC URLs, contract addresses, and Supabase credentials
-
-4. Set up Supabase tables
-   ```
-   npm run setup-supabase
-   ```
-   This will output the SQL statements to create the necessary tables. Execute them in your Supabase SQL editor.
-
-### HYPE Vault Setup
-
-For HYPE vault monitoring specifically:
-
-1. Set up HYPE vault database schema:
-   ```
-   npm run setup-hype
-   ```
-
-2. Start HYPE vault monitoring:
-   ```
-   npm run hype-monitor
-   ```
-
-3. Start HYPE vault API and background jobs:
-   ```
-   npm run dev-hype
-   ```
-
-### Contract Configuration
-
-Update the following in your `.env` file:
-
-```
-BORING_VAULT_ADDRESS=0x...  # Actual contract address
-FELIX_ADDRESS=0x...         # Actual contract address
-HLP_ADDRESS=0x...           # Actual contract address
-
-BORING_VAULT_START_BLOCK=   # Block number when the contract was deployed
-FELIX_START_BLOCK=          # Block number when the contract was deployed
-HLP_START_BLOCK=            # Block number when the contract was deployed
+### 1. Install dependencies
+```bash
+npm install
 ```
 
-## Running the System
+### 2. Configure environment variables in `.env`
+```bash
+# Database
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_key
+DATABASE_URL=postgresql://...
 
-### Indexer
+# Contracts
+HYPE_VAULT_ADDRESS=your_vault_address
+HYPE_TOKEN_ADDRESS=your_hype_token_address
+STHYPE_TOKEN_ADDRESS=your_sthype_token_address
 
-To start the Ponder indexer which captures on-chain events:
+# Network
+PONDER_RPC_URL_BASE=https://...
+CHAIN_ID=8453
+```
+
+### 3. Create database tables
+Execute the SQL script in `sql/create_missing_tables.sql` in your Supabase dashboard.
+
+## Main Commands
+
+### Core Metrics Monitoring (Recommended)
+```bash
+npm run core-metrics-clean    # Run core metrics with fallbacks
+```
+
+This command:
+- Fetches real HYPE price from CoinGecko API
+- Calculates vault metrics according to assignment specifications
+- Stores data in Supabase
+- Generates alerts if thresholds are exceeded
+
+### Alternative Commands
+```bash
+npm run core-metrics          # Core metrics with blockchain calls
+npm run prices-only          # Price monitoring only
+npm run hype-monitor         # Single monitoring execution
+npm run hype-api             # API server only
+npm run hype-jobs            # Background monitoring jobs
+```
+
+### Development Commands
+```bash
+npm run dev                  # Start development environment
+npm run lint                 # Run linter
+npm run typecheck            # Type checking
+```
+
+## Core Metrics Tracked
+
+The system monitors these key metrics according to the Monitoring & Reporting assignment:
+
+1. **Total vault deposits (HYPE)** - Total HYPE tokens in the vault
+2. **Total vault deposits (USD-equivalent)** - USD value of vault deposits
+3. **stHYPE supplied as collateral in Felix** - Collateral amount in lending protocol
+4. **Outstanding HYPE borrowed** - Current borrowed amount
+5. **Net annualized yield on HYPE** - Calculated yield percentage
+
+### Additional Metrics
+- Leverage ratio
+- Health factor
+- Risk score
+- Liquidation price
+- Price volatility
+
+## API Endpoints
+
+When running the API server (`npm run hype-api`):
 
 ```
-npm run dev
+GET /api/health              # API status
+GET /api/vault/status        # Current vault status
+GET /api/vault/metrics       # Historical metrics
+GET /api/prices             # Price data
+GET /api/risk               # Risk analysis
+GET /api/alerts             # Active alerts
+GET /api/users              # User positions
 ```
 
-### Background Jobs
+## Database Tables
 
-To run the scheduled jobs for price data and risk metrics:
+The system stores data in the following Supabase tables:
+- `core_vault_metrics` - Main metrics data (assignment requirements)
+- `vault_metrics` - Additional vault data
+- `price_data` - Price history
+- `risk_assessments` - Risk analysis data
+- `vault_health` - System health metrics
+- `alerts` - Alert notifications
+- `monitoring_errors` - Error logging
 
+## Continuous Monitoring
+
+For production monitoring, run the core metrics command periodically:
+
+```bash
+# Example: every 5 minutes
+watch -n 300 npm run core-metrics-clean
+
+# Or use a cron job
+*/5 * * * * cd /path/to/vault_monitor && npm run core-metrics-clean
 ```
-npm run jobs
-```
 
-### Individual Scripts
+## Testing Status
 
-You can also run each component individually:
+### Verified Working Commands
+- `npm run core-metrics-clean` - Core metrics with real data
+- `npm run hype-monitor` - Single monitoring execution
+- `npm run hype-api` - API server functionality
+- `npm run prices-only` - Price data fetching
 
-**General monitoring:**
-- Fetch latest price data: `npm run prices`
-- Calculate risk metrics: `npm run risk`
-- General monitoring: `npm run monitor`
-
-**HYPE vault specific:**
-- HYPE vault monitoring: `npm run hype-monitor`
-- HYPE vault background jobs: `npm run hype-jobs`
-- HYPE vault API server: `npm run hype-api`
-- HYPE vault setup: `npm run setup-hype`
-
-## Development
-
-### Project Structure
-
-- `abis/`: Contract ABIs
-- `src/handlers/`: Event handlers for each contract
-- `src/scripts/`: Utility scripts for data fetching and processing
-- `ponder.schema.ts`: Database schema definition for Ponder
-- `ponder.config.ts`: Ponder configuration
-
-### Adding New Contracts
-
-1. Add the contract ABI to the `abis/` directory
-2. Update `ponder.config.ts` with the new contract details
-3. Create a new handler file in `src/handlers/` for the contract's events
-
-## Monitoring Dashboard
-
-A dashboard can be built on top of the Supabase database to visualize the collected data. The system stores:
-
-- Raw blockchain events
-- Price and liquidity data
-- User position details and risk metrics
-- Protocol-wide health metrics
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
+### Verified API Endpoints
+- `GET /api/health` - System status
+- `GET /api/vault/status` - Vault data
+- `GET /api/prices` - Price records
+- `GET /api/risk` - Risk assessment
+- `GET /api/alerts` - Alert system
